@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] - 2026-07-12
+### Added
+- Bottom tab navigation (`@react-navigation/native`, `@react-navigation/bottom-tabs`, `react-native-screens`, `react-native-safe-area-context`), replacing the manual Expenses/Chart toggle button.
+- `src/screens/ExpensesScreen.tsx` and `src/screens/ChartScreen.tsx` as the two tab routes.
+- `src/hooks/useExpenses.ts`: shared data hook (load/add/delete), reloading on screen focus via `useFocusEffect`.
+- `src/components/ScreenStatus.tsx`: shared loading/error view for both screens.
+
+### Changed
+- `App.tsx` is now the navigation root only; all screen-specific state moved into `useExpenses()` and the two screen components.
+
 ## [0.3.0] - 2026-07-12
 ### Added
 - Monthly spending chart: horizontal bar per category for the current month (`src/components/MonthlyChart.tsx`), backed by a pure aggregation function (`src/services/monthlySummary.ts`).
