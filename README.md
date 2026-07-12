@@ -1,5 +1,7 @@
 # Expense Tracker
 
+[![CI](https://github.com/breakingthebot/expense-tracker-build31/actions/workflows/ci.yml/badge.svg)](https://github.com/breakingthebot/expense-tracker-build31/actions/workflows/ci.yml)
+
 A React Native (Expo) mobile app for logging expenses and browsing them, with everything stored locally on the device.
 
 ## Stack
@@ -47,6 +49,15 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/AddExpenseForm.tsx` and `src/components/ExpenseList.tsx` are presentational — they don't know about AsyncStorage directly, only about the callbacks and data `App.tsx` passes them.
 - `App.tsx` owns the loading/error/list state and wires the form and list to the storage service.
 - Money is stored as integer cents (`amountCents`), not floating-point dollars, so future totals (like the monthly chart) sum exactly instead of accumulating rounding errors.
+
+## Continuous integration
+
+Every push and pull request against `main` runs typecheck and the full Jest
+test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no
+separate "build" step: Expo managed-workflow apps don't have a plain
+`npm run build` outside of EAS Build (which needs Apple/Google credentials),
+so typecheck + tests are the CI-appropriate checks for this stage of the
+project.
 
 ## Notes
 - No navigation yet — this is intentionally a single-screen app for iteration 1. A tab/stack navigator is a likely next iteration once there's a second screen (e.g. the monthly chart) to navigate to.

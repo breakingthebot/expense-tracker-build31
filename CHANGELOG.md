@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] - 2026-07-12
+### Added
+- GitHub Actions CI workflow (`.github/workflows/ci.yml`): runs on every push/PR to `main`, installs with `npm ci`, then runs `typecheck` and the Jest suite.
+- CI status badge and a "Continuous integration" section in the README.
+
 ## [0.1.0] - 2026-07-12
 ### Added
 - Expo (TypeScript) project scaffold.
