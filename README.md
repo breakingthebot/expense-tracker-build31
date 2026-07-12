@@ -50,6 +50,13 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `App.tsx` owns the loading/error/list state and wires the form and list to the storage service.
 - Money is stored as integer cents (`amountCents`), not floating-point dollars, so future totals (like the monthly chart) sum exactly instead of accumulating rounding errors.
 
+### Monthly chart (Iteration 3)
+- `src/services/monthlySummary.ts` is a pure aggregation function: given the full expense list and a `yyyy-mm` key, it sums `amountCents` per category for that month, drops categories with no spending, and sorts highest-first. No AsyncStorage dependency, so it's trivial to unit test.
+- `src/config/categoryColors.ts` assigns each category a fixed hex color from a validated categorical palette (8 hues, fixed order, checked for colorblind-safe separation between adjacent slots — see `BUILD_NOTES.md` for the validator output). The same category always gets the same color, so it stays recognizable between the form's category chips and the chart.
+- `src/components/MonthlyChart.tsx` renders a horizontal bar per category — bar length relative to the month's largest category, category name and dollar amount as plain text next to every bar (never color-only, since three of the eight palette colors don't meet 3:1 text contrast on their own).
+- `App.tsx` adds an "Expenses" / "Chart" toggle at the top instead of pulling in a navigation library — this app still has exactly one logical screen's worth of chrome, just two views into it.
+- The chart currently only supports light mode (matching the rest of the app, which doesn't yet theme for dark mode either). Device dark-mode support is listed as a future candidate rather than theming one component in isolation.
+
 ## Continuous integration
 
 Every push and pull request against `main` runs typecheck and the full Jest
@@ -60,6 +67,7 @@ so typecheck + tests are the CI-appropriate checks for this stage of the
 project.
 
 ## Notes
-- No navigation yet — this is intentionally a single-screen app for iteration 1. A tab/stack navigator is a likely next iteration once there's a second screen (e.g. the monthly chart) to navigate to.
+- No real navigation library yet — the Expenses/Chart split uses a plain toggle in `App.tsx`, not a tab/stack navigator. Worth revisiting once there's a third view.
 - The date field currently defaults to today and isn't user-editable in the form; a proper date picker is a candidate for a later iteration.
+- The chart is light-mode only for now; it wasn't run through a simulator/device screenshot in this environment (no simulator available here) — verified via a successful Android bundle export (`npx expo export --platform android`), TypeScript, and the test suite. Please eyeball it on your device the first time you pull this.
 - `AGENTS.md`, `claude.md`, and `BUILD_NOTES.md` are intentionally excluded from this repo (see `.gitignore`) — they're local build-process files, not part of the shipped app.

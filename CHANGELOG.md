@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.0] - 2026-07-12
+### Added
+- Monthly spending chart: horizontal bar per category for the current month (`src/components/MonthlyChart.tsx`), backed by a pure aggregation function (`src/services/monthlySummary.ts`).
+- Fixed categorical color per expense category (`src/config/categoryColors.ts`), from a validated 8-hue colorblind-safe palette.
+- `formatMonthLabel` date helper ("2026-07" → "July 2026").
+- "Expenses" / "Chart" toggle in `App.tsx` to switch views without adding a navigation dependency.
+- 9 new tests covering month aggregation and the month-label formatter (24 total).
+
 ## [0.2.0] - 2026-07-12
 ### Added
 - GitHub Actions CI workflow (`.github/workflows/ci.yml`): runs on every push/PR to `main`, installs with `npm ci`, then runs `typecheck` and the Jest suite.
