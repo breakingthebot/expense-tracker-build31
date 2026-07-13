@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "expense-tracker-scaffold-tmp",
-    "slug": "expense-tracker-scaffold-tmp",
+    "name": "Expense Tracker",
+    "slug": "expense-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,6 +20,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }

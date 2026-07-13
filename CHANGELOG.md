@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] - 2026-07-12
+### Added
+- Editable Date field on the add-expense form, via `@react-native-community/datetimepicker` (iOS: inline compact picker; Android: button opening the native dialog). Dates can't be set in the future.
+- `toIsoDate(date: Date)` and `parseIsoDate(isoDate: string)` in `src/utils/date.ts`.
+- 5 new date-utility tests (29 total).
+
+### Changed
+- `todayIsoDate()` and `formatDisplayDate()` refactored to reuse `toIsoDate`/`parseIsoDate` instead of duplicating date-construction logic.
+- `app.json`: fixed `name`/`slug` still saying "expense-tracker-scaffold-tmp" from the original scaffold (was never updated in Iteration 1) — now "Expense Tracker" / "expense-tracker".
+
 ## [0.4.0] - 2026-07-12
 ### Added
 - Bottom tab navigation (`@react-navigation/native`, `@react-navigation/bottom-tabs`, `react-native-screens`, `react-native-safe-area-context`), replacing the manual Expenses/Chart toggle button.

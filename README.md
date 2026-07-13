@@ -8,6 +8,7 @@ A React Native (Expo) mobile app for logging expenses and browsing them, with ev
 - React Native + Expo (TypeScript, managed workflow)
 - `@react-native-async-storage/async-storage` for on-device local storage
 - `@react-navigation/native` + `@react-navigation/bottom-tabs` for the Expenses/Chart tab navigation
+- `@react-native-community/datetimepicker` for the native date picker
 - Jest (`jest-expo` preset) for tests
 
 ## Setup
@@ -62,6 +63,12 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/hooks/useExpenses.ts` centralizes expense loading/add/delete (previously inline in `App.tsx`). It reloads via `useFocusEffect` whenever its screen regains focus, so adding an expense on the Expenses tab and switching to Chart shows the updated total immediately — no shared global state needed for two screens.
 - `src/components/ScreenStatus.tsx` is the shared loading-spinner/error-message view, extracted once both screens needed the same three style rules.
 
+### Editable date picker (Iteration 5)
+- `src/components/AddExpenseForm.tsx` now has a real Date field instead of always defaulting silently to today. iOS renders `@react-native-community/datetimepicker`'s `display="compact"` mode directly inline (a small self-contained pill — no show/hide state needed). Android renders a text button showing the selected date; tapping it opens the platform's native date dialog, which is only mounted in the tree while open (Android's picker is dialog-based, not inline, so this is the standard pattern for the library).
+- Dates can't be set in the future (`maximumDate={new Date()}`) — you can't log an expense that hasn't happened yet.
+- `src/utils/date.ts` gained `toIsoDate(date: Date)` and `parseIsoDate(isoDate: string)` to convert between the picker's native `Date` objects and the app's stored `yyyy-mm-dd` strings; `todayIsoDate()` and `formatDisplayDate()` were refactored to reuse them instead of duplicating the same construction logic.
+- The picked date is *not* reset back to today after adding an expense (unlike the amount and note fields) — if you're logging several expenses from the same earlier day in a row, you don't want to re-pick the date every time.
+
 ## Continuous integration
 
 Every push and pull request against `main` runs typecheck and the full Jest
@@ -72,7 +79,6 @@ so typecheck + tests are the CI-appropriate checks for this stage of the
 project.
 
 ## Notes
-- The date field currently defaults to today and isn't user-editable in the form; a proper date picker is a candidate for a later iteration.
-- The chart is light-mode only for now; the tab bar and screens likewise haven't been run through a simulator/device screenshot in this environment (no simulator available here) — verified via a successful Android bundle export (`npx expo export --platform android`), TypeScript, and the test suite. Please eyeball it on your device the first time you pull this.
+- The chart, tab bar, and date picker haven't been run through a simulator/device screenshot in this environment (no simulator available here) — verified via successful Android *and* iOS bundle exports (`npx expo export --platform android|ios`), TypeScript, and the test suite. The date picker in particular renders very differently per platform (inline pill on iOS, dialog on Android) — please check both if you can, or at least whichever platform you primarily use.
 - Deleting an expense on the Expenses tab and then switching to Chart shows the updated total right away — this relies on `useFocusEffect` re-loading on tab focus, not a shared store, since two screens didn't yet justify adding one.
 - `AGENTS.md`, `claude.md`, and `BUILD_NOTES.md` are intentionally excluded from this repo (see `.gitignore`) — they're local build-process files, not part of the shipped app.
