@@ -4,7 +4,13 @@
 // Mirrors: src/utils/date.ts
 // Created: 2026-07-12
 
-import { formatDisplayDate, formatMonthLabel, parseIsoDate, toIsoDate } from '../../src/utils/date';
+import {
+  formatDisplayDate,
+  formatMonthLabel,
+  parseIsoDate,
+  shiftMonthKey,
+  toIsoDate,
+} from '../../src/utils/date';
 
 describe('toIsoDate', () => {
   it('formats a Date as yyyy-mm-dd', () => {
@@ -46,5 +52,31 @@ describe('formatMonthLabel', () => {
 
   it('formats December correctly', () => {
     expect(formatMonthLabel('2026-12')).toBe('December 2026');
+  });
+});
+
+describe('shiftMonthKey', () => {
+  it('goes back one month within the same year', () => {
+    expect(shiftMonthKey('2026-07', -1)).toBe('2026-06');
+  });
+
+  it('goes forward one month within the same year', () => {
+    expect(shiftMonthKey('2026-07', 1)).toBe('2026-08');
+  });
+
+  it('rolls back over a year boundary', () => {
+    expect(shiftMonthKey('2026-01', -1)).toBe('2025-12');
+  });
+
+  it('rolls forward over a year boundary', () => {
+    expect(shiftMonthKey('2026-12', 1)).toBe('2027-01');
+  });
+
+  it('supports multi-month deltas', () => {
+    expect(shiftMonthKey('2026-07', -8)).toBe('2025-11');
+  });
+
+  it('is a no-op with a delta of 0', () => {
+    expect(shiftMonthKey('2026-07', 0)).toBe('2026-07');
   });
 });

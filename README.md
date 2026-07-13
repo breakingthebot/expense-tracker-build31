@@ -76,6 +76,13 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/hooks/useExpenses.ts` gained `editExpense(id, input)`, following the same submitting/refresh pattern as `addNewExpense`.
 - `src/utils/currency.ts` gained `centsToInputString(amountCents)` — the inverse of `parseDollarsToCents`, used to pre-fill the amount field with a plain "12.50" instead of the currency-formatted "$12.50" from `formatCents`.
 
+### Month navigation on the chart (Iteration 7)
+- `src/components/MonthlyChart.tsx` now renders `‹ Month Year ›` navigation arrows in its header, always visible (even on an empty month, so you can navigate away from it) instead of just a static label.
+- `src/screens/ChartScreen.tsx` owns the selected `monthKey` as state (defaulting to the current month) and passes `onPreviousMonth`/`onNextMonth`/`canGoToNextMonth` down. The "next" arrow disables once you're back at the current month — no browsing into months that haven't happened yet.
+- `src/utils/date.ts` gained `shiftMonthKey(monthKey, deltaMonths)`, handling year rollover in both directions (December → January, January → December).
+- Arrows only, no swipe gesture — considered, but arrows are simpler, need no new dependency, and are more discoverable/accessible (screen readers, no hidden gesture to find) than swipe-only navigation would be.
+- Because bottom tab screens stay mounted by default, navigating to a past month and switching to the Expenses tab and back preserves that selection — it doesn't silently reset to the current month.
+
 ## Continuous integration
 
 Every push and pull request against `main` runs typecheck and the full Jest

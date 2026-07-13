@@ -40,3 +40,12 @@ export function formatMonthLabel(monthKey: string): string {
   const date = new Date(year, month - 1, 1);
   return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
+
+/** Shifts a yyyy-mm month key by `deltaMonths` (negative to go back), handling year rollover. */
+export function shiftMonthKey(monthKey: string, deltaMonths: number): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  const shifted = new Date(year, month - 1 + deltaMonths, 1);
+  const shiftedYear = shifted.getFullYear();
+  const shiftedMonth = String(shifted.getMonth() + 1).padStart(2, '0');
+  return `${shiftedYear}-${shiftedMonth}`;
+}

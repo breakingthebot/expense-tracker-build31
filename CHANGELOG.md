@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] - 2026-07-12
+### Added
+- Month navigation on the Chart tab: `‹ ›` arrows to browse prior months, disabled going past the current month.
+- `shiftMonthKey(monthKey, deltaMonths)` in `src/utils/date.ts`, handling year rollover.
+- 6 new date-utility tests (42 total).
+
+### Changed
+- `MonthlyChart` now takes `onPreviousMonth`, `onNextMonth`, `canGoToNextMonth` props and always renders its header (previously the empty-state branch only showed the month label with no way to navigate away from it).
+- `ChartScreen` owns `monthKey` as state instead of a fixed current-month `useMemo`.
+
 ## [0.6.0] - 2026-07-12
 ### Added
 - Edit existing expenses: tap a row in the list to edit it. `AddExpenseForm` now supports an `editingExpense` prop (pre-filled fields, "Edit Expense" heading, "Save Changes" button, Cancel button).
