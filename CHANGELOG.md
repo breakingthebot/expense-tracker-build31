@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] - 2026-07-12
+### Added
+- Edit existing expenses: tap a row in the list to edit it. `AddExpenseForm` now supports an `editingExpense` prop (pre-filled fields, "Edit Expense" heading, "Save Changes" button, Cancel button).
+- `updateExpense(id, input)` in `src/services/expenseStorage.ts`; `editExpense(id, input)` in `src/hooks/useExpenses.ts`.
+- `centsToInputString(amountCents)` in `src/utils/currency.ts`.
+- 7 new tests (36 total): `updateExpense` CRUD behavior and `centsToInputString`.
+
+### Changed
+- `ExpenseList` rows are now tappable (edit) in addition to the existing Delete link; `onEdit` is a new required prop.
+
 ## [0.5.0] - 2026-07-12
 ### Added
 - Editable Date field on the add-expense form, via `@react-native-community/datetimepicker` (iOS: inline compact picker; Android: button opening the native dialog). Dates can't be set in the future.

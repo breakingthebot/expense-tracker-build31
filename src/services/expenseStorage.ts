@@ -72,6 +72,39 @@ export async function addExpense(input: NewExpenseInput): Promise<Expense> {
   return expense;
 }
 
+/**
+ * Validates and saves changes to an existing expense, keeping its id and
+ * original createdAt. Throws a user-facing error if validation fails or the
+ * id doesn't exist.
+ */
+export async function updateExpense(id: string, input: NewExpenseInput): Promise<Expense> {
+  const errors = validateNewExpense(input);
+  if (errors.length > 0) {
+    throw new Error(errors.join(' '));
+  }
+
+  const existing = await readAll();
+  const index = existing.findIndex((expense) => expense.id === id);
+  if (index === -1) {
+    logger.error(SCOPE, 'Attempted to update an expense that was not found', { id });
+    throw new Error('That expense no longer exists.');
+  }
+
+  const updated: Expense = {
+    ...existing[index],
+    amountCents: input.amountCents,
+    category: input.category,
+    note: input.note.trim(),
+    date: input.date,
+  };
+
+  const next = [...existing];
+  next[index] = updated;
+  await writeAll(next);
+  logger.info(SCOPE, 'Expense updated', { id });
+  return updated;
+}
+
 /** Deletes an expense by id. No-op (with a warning log) if the id is not found. */
 export async function deleteExpense(id: string): Promise<void> {
   const existing = await readAll();

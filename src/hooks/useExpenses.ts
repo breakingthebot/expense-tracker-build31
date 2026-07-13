@@ -2,14 +2,19 @@
 // Shared data hook for the Expenses and Chart screens. Loads expenses on
 // mount and re-loads every time the owning screen regains focus (so adding
 // an expense on one tab shows up immediately when you switch to the other),
-// and exposes add/delete actions that refresh state afterward.
+// and exposes add/update/delete actions that refresh state afterward.
 // Connects to: src/services/expenseStorage.ts, src/screens/ExpensesScreen.tsx, src/screens/ChartScreen.tsx
 // Created: 2026-07-12
 
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Expense, NewExpenseInput } from '../models/expense';
-import { addExpense, deleteExpense, getAllExpenses } from '../services/expenseStorage';
+import {
+  addExpense,
+  deleteExpense,
+  getAllExpenses,
+  updateExpense,
+} from '../services/expenseStorage';
 import { logger } from '../utils/logger';
 
 const SCOPE = 'useExpenses';
@@ -20,6 +25,7 @@ interface UseExpensesResult {
   loadError: string | null;
   submitting: boolean;
   addNewExpense: (input: NewExpenseInput) => Promise<void>;
+  editExpense: (id: string, input: NewExpenseInput) => Promise<void>;
   removeExpense: (id: string) => Promise<void>;
 }
 
@@ -59,10 +65,28 @@ export function useExpenses(): UseExpensesResult {
     }
   }
 
+  async function editExpense(id: string, input: NewExpenseInput) {
+    setSubmitting(true);
+    try {
+      await updateExpense(id, input);
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function removeExpense(id: string) {
     await deleteExpense(id);
     await refresh();
   }
 
-  return { expenses, loading, loadError, submitting, addNewExpense, removeExpense };
+  return {
+    expenses,
+    loading,
+    loadError,
+    submitting,
+    addNewExpense,
+    editExpense,
+    removeExpense,
+  };
 }

@@ -29,3 +29,12 @@ export function formatCents(amountCents: number): string {
     currency: 'USD',
   });
 }
+
+/**
+ * Formats integer cents as a plain, editable amount string (e.g. "12.50"),
+ * with no currency symbol or thousands separator — the inverse of
+ * parseDollarsToCents, used to pre-fill the amount field when editing.
+ */
+export function centsToInputString(amountCents: number): string {
+  return (amountCents / 100).toFixed(2);
+}

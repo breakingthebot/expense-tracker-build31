@@ -1,8 +1,11 @@
 // src/components/AddExpenseForm.tsx
-// Form for entering a new expense: amount, category, date, and an optional
-// note. Validates input locally before calling onSubmit so the user sees
-// errors immediately, without a round trip to storage.
-// Connects to: src/config/categories.ts, src/utils/currency.ts, src/utils/date.ts, App.tsx
+// Form for entering a new expense, or editing an existing one when
+// `editingExpense` is passed in. Validates input locally before calling
+// onSubmit so the user sees errors immediately, without a round trip to
+// storage. The parent should remount this component (e.g. via a `key` tied
+// to the expense id) when switching which expense is being edited, so field
+// state re-seeds correctly.
+// Connects to: src/config/categories.ts, src/utils/currency.ts, src/utils/date.ts, src/screens/ExpensesScreen.tsx
 // Created: 2026-07-12
 
 import { useState } from 'react';
@@ -11,21 +14,35 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { EXPENSE_CATEGORIES, ExpenseCategory } from '../config/categories';
-import { NewExpenseInput } from '../models/expense';
-import { parseDollarsToCents } from '../utils/currency';
+import { Expense, NewExpenseInput } from '../models/expense';
+import { centsToInputString, parseDollarsToCents } from '../utils/currency';
 import { formatDisplayDate, parseIsoDate, todayIsoDate, toIsoDate } from '../utils/date';
 
 interface AddExpenseFormProps {
   onSubmit: (input: NewExpenseInput) => Promise<void>;
   submitting: boolean;
+  /** When set, the form edits this expense instead of creating a new one. */
+  editingExpense?: Expense;
+  /** Shown only in edit mode; lets the user back out without saving. */
+  onCancelEdit?: () => void;
 }
 
-/** Renders the add-expense form and owns its own field state. */
-export default function AddExpenseForm({ onSubmit, submitting }: AddExpenseFormProps) {
-  const [amountText, setAmountText] = useState('');
-  const [category, setCategory] = useState<ExpenseCategory>(EXPENSE_CATEGORIES[0]);
-  const [note, setNote] = useState('');
-  const [date, setDate] = useState(todayIsoDate());
+/** Renders the add/edit-expense form and owns its own field state. */
+export default function AddExpenseForm({
+  onSubmit,
+  submitting,
+  editingExpense,
+  onCancelEdit,
+}: AddExpenseFormProps) {
+  const isEditing = editingExpense !== undefined;
+  const [amountText, setAmountText] = useState(
+    editingExpense ? centsToInputString(editingExpense.amountCents) : ''
+  );
+  const [category, setCategory] = useState<ExpenseCategory>(
+    editingExpense?.category ?? EXPENSE_CATEGORIES[0]
+  );
+  const [note, setNote] = useState(editingExpense?.note ?? '');
+  const [date, setDate] = useState(editingExpense?.date ?? todayIsoDate());
   const [showAndroidPicker, setShowAndroidPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,16 +65,19 @@ export default function AddExpenseForm({ onSubmit, submitting }: AddExpenseFormP
     setError(null);
     try {
       await onSubmit({ amountCents, category, note, date });
-      setAmountText('');
-      setNote('');
+      if (!isEditing) {
+        setAmountText('');
+        setNote('');
+      }
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Could not add expense.');
+      const fallback = isEditing ? 'Could not save changes.' : 'Could not add expense.';
+      setError(submitError instanceof Error ? submitError.message : fallback);
     }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Add Expense</Text>
+      <Text style={styles.heading}>{isEditing ? 'Edit Expense' : 'Add Expense'}</Text>
 
       <Text style={styles.label}>Amount</Text>
       <TextInput
@@ -130,14 +150,29 @@ export default function AddExpenseForm({ onSubmit, submitting }: AddExpenseFormP
 
       {error && <Text style={styles.error}>{error}</Text>}
 
-      <TouchableOpacity
-        style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
-        onPress={handleSubmit}
-        disabled={submitting}
-        accessibilityRole="button"
-      >
-        <Text style={styles.submitButtonText}>{submitting ? 'Adding…' : 'Add Expense'}</Text>
-      </TouchableOpacity>
+      <View style={styles.actionRow}>
+        <TouchableOpacity
+          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={submitting}
+          accessibilityRole="button"
+        >
+          <Text style={styles.submitButtonText}>
+            {submitting ? (isEditing ? 'Saving…' : 'Adding…') : isEditing ? 'Save Changes' : 'Add Expense'}
+          </Text>
+        </TouchableOpacity>
+
+        {isEditing && (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={onCancelEdit}
+            disabled={submitting}
+            accessibilityRole="button"
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -209,8 +244,13 @@ const styles = StyleSheet.create({
     color: '#c0392b',
     marginTop: 8,
   },
-  submitButton: {
+  actionRow: {
+    flexDirection: 'row',
+    gap: 8,
     marginTop: 16,
+  },
+  submitButton: {
+    flex: 1,
     backgroundColor: '#2f6feb',
     borderRadius: 8,
     paddingVertical: 12,
@@ -221,6 +261,20 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  cancelButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    color: '#333',
     fontWeight: '600',
     fontSize: 16,
   },

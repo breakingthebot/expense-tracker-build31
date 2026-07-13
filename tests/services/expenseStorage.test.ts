@@ -6,7 +6,12 @@
 // Created: 2026-07-12
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addExpense, deleteExpense, getAllExpenses } from '../../src/services/expenseStorage';
+import {
+  addExpense,
+  deleteExpense,
+  getAllExpenses,
+  updateExpense,
+} from '../../src/services/expenseStorage';
 
 const validInput = {
   amountCents: 1000,
@@ -60,6 +65,51 @@ describe('addExpense', () => {
       'Amount must be greater than $0.00.'
     );
     await expect(getAllExpenses()).resolves.toEqual([]);
+  });
+});
+
+describe('updateExpense', () => {
+  it('updates the fields and keeps the same id and createdAt', async () => {
+    const original = await addExpense(validInput);
+    const updated = await updateExpense(original.id, {
+      amountCents: 2500,
+      category: 'Housing',
+      note: 'Rent',
+      date: '2026-07-11',
+    });
+
+    expect(updated.id).toBe(original.id);
+    expect(updated.createdAt).toBe(original.createdAt);
+    expect(updated.amountCents).toBe(2500);
+    expect(updated.category).toBe('Housing');
+    expect(updated.note).toBe('Rent');
+    expect(updated.date).toBe('2026-07-11');
+
+    const all = await getAllExpenses();
+    expect(all).toHaveLength(1);
+    expect(all[0]).toEqual(updated);
+  });
+
+  it('trims whitespace from the note', async () => {
+    const original = await addExpense(validInput);
+    const updated = await updateExpense(original.id, { ...validInput, note: '  Rent  ' });
+    expect(updated.note).toBe('Rent');
+  });
+
+  it('throws with a user-facing message and does not save on invalid input', async () => {
+    const original = await addExpense(validInput);
+    await expect(
+      updateExpense(original.id, { ...validInput, amountCents: 0 })
+    ).rejects.toThrow('Amount must be greater than $0.00.');
+
+    const all = await getAllExpenses();
+    expect(all[0].amountCents).toBe(validInput.amountCents);
+  });
+
+  it('throws when the id does not exist', async () => {
+    await expect(updateExpense('does-not-exist', validInput)).rejects.toThrow(
+      'That expense no longer exists.'
+    );
   });
 });
 

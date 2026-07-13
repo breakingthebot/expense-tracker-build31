@@ -1,7 +1,8 @@
 // src/components/ExpenseList.tsx
-// Displays the saved expenses, most recent first, with a delete action per
-// row. Shows a dedicated empty state when there are no expenses yet.
-// Connects to: src/models/expense.ts, src/utils/currency.ts, src/utils/date.ts, App.tsx
+// Displays the saved expenses, most recent first. Tapping a row edits it;
+// tapping "Delete" removes it. Shows a dedicated empty state when there are
+// no expenses yet.
+// Connects to: src/models/expense.ts, src/utils/currency.ts, src/utils/date.ts, src/screens/ExpensesScreen.tsx
 // Created: 2026-07-12
 
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -11,11 +12,12 @@ import { formatDisplayDate } from '../utils/date';
 
 interface ExpenseListProps {
   expenses: Expense[];
+  onEdit: (expense: Expense) => void;
   onDelete: (id: string) => void;
 }
 
 /** Renders the list of expenses, or an empty-state message when there are none. */
-export default function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
+export default function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
   if (expenses.length === 0) {
     return (
       <View style={styles.emptyState}>
@@ -30,7 +32,12 @@ export default function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
       keyExtractor={(expense) => expense.id}
       contentContainerStyle={styles.listContent}
       renderItem={({ item }) => (
-        <View style={styles.row}>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => onEdit(item)}
+          accessibilityRole="button"
+          accessibilityLabel={`Edit expense: ${item.category}, ${formatCents(item.amountCents)}`}
+        >
           <View style={styles.rowText}>
             <Text style={styles.category}>{item.category}</Text>
             {item.note.length > 0 && <Text style={styles.note}>{item.note}</Text>}
@@ -46,7 +53,7 @@ export default function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
               <Text style={styles.deleteText}>Delete</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       )}
     />
   );

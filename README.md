@@ -69,6 +69,13 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/utils/date.ts` gained `toIsoDate(date: Date)` and `parseIsoDate(isoDate: string)` to convert between the picker's native `Date` objects and the app's stored `yyyy-mm-dd` strings; `todayIsoDate()` and `formatDisplayDate()` were refactored to reuse them instead of duplicating the same construction logic.
 - The picked date is *not* reset back to today after adding an expense (unlike the amount and note fields) — if you're logging several expenses from the same earlier day in a row, you don't want to re-pick the date every time.
 
+### Edit existing expenses (Iteration 6)
+- Tapping an expense row in the list now edits it, instead of only being able to delete and re-add. `src/components/AddExpenseForm.tsx` takes an optional `editingExpense` prop: when set, the form pre-fills from that expense, the heading becomes "Edit Expense," the submit button becomes "Save Changes," and a "Cancel" button appears to back out without saving.
+- `src/screens/ExpensesScreen.tsx` renders `<AddExpenseForm key={editingExpense?.id ?? 'new'} .../>` — remounting the form (rather than trying to sync its internal state via an effect) whenever the edit target changes, so switching from adding to editing, or between editing two different expenses, always starts from clean, correctly pre-filled field state.
+- `src/services/expenseStorage.ts` gained `updateExpense(id, input)`: same validation as `addExpense`, but overwrites an existing record's fields while keeping its `id` and original `createdAt`.
+- `src/hooks/useExpenses.ts` gained `editExpense(id, input)`, following the same submitting/refresh pattern as `addNewExpense`.
+- `src/utils/currency.ts` gained `centsToInputString(amountCents)` — the inverse of `parseDollarsToCents`, used to pre-fill the amount field with a plain "12.50" instead of the currency-formatted "$12.50" from `formatCents`.
+
 ## Continuous integration
 
 Every push and pull request against `main` runs typecheck and the full Jest
