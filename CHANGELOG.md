@@ -3,6 +3,34 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.0] - 2026-07-17
+### Added
+- Sticky search and filter tools on [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx):
+  - TextInput query search with cross-platform clear button.
+  - Horizontal scrollable filter chip row mapping categories, plus an "All" reset trigger.
+- Contextual empty state in [ExpenseList.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ExpenseList.tsx) showing `"No matching expenses found."` when filters return empty results.
+- Filtered CSV reports: the export trigger now compiles only the active filtered subset of transactions, allowing users to export category- or query-specific spreadsheet reports.
+
+## [0.9.0] - 2026-07-17
+### Added
+- Split the ledger screen: created [AddScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/AddScreen.tsx) (for logging/editing transactions) and [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx) (for displaying history, deletion, and CSV exports).
+- Type-safe navigation parameters via [navigation.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/types/navigation.ts) parameter lists.
+- Keyboard-aware scroll container wrapping `AddExpenseForm` in the dedicated input screen.
+
+### Changed
+- [App.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/App.tsx) bottom navigator updated to a 3-tab layout (Add, History, Chart).
+- Tapping an expense in the ledger list now navigates to the input tab, passing parameters to seed edit fields. Completed edits clear parameters and return the user to the ledger.
+- Deleted the old monolithic `src/screens/ExpensesScreen.tsx`.
+
+## [0.8.0] - 2026-07-17
+### Added
+- Local CSV data export feature (under [csv.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/utils/csv.ts) and [expenseExport.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/expenseExport.ts)), utilizing `expo-file-system/legacy` for temporary caching and `expo-sharing` to launch native sharing sheet options.
+- UI triggers: "Export CSV" link added in the transaction list header row.
+- 10 new tests covering CSV formatting logic and native file writing/sharing mock states (52 total).
+
+### Changed
+- [ExpensesScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ExpensesScreen.tsx) updated to coordinate file-sharing operations, loading states, and catch failure states into user-friendly `Alert` dialogs.
+
 ## [0.7.0] - 2026-07-12
 ### Added
 - Month navigation on the Chart tab: `‹ ›` arrows to browse prior months, disabled going past the current month.

@@ -10,6 +10,8 @@ A React Native (Expo) mobile app for logging expenses and browsing them, with ev
 - `@react-navigation/native` + `@react-navigation/bottom-tabs` for the Expenses/Chart tab navigation
 - `@react-native-community/datetimepicker` for the native date picker
 - Jest (`jest-expo` preset) for tests
+- `expo-file-system` (legacy module) for temporary on-device file writing
+- `expo-sharing` for launching native sharing sheets
 
 ## Setup
 1. Install [Node.js](https://nodejs.org/) 20 or newer.
@@ -41,6 +43,7 @@ Not deployed anywhere yet — run locally via Expo Go as described above.
 - All expense data (amount, category, note, date) is stored only on the device, using AsyncStorage. Nothing is sent to a server.
 - No account, sign-in, or personal identifying information is collected.
 - Deleting the app removes all stored expense data.
+- CSV data export is entirely local and user-initiated; the exported file is stored in a temporary device directory and shared using the system sharing dialog.
 
 ## Architecture Notes
 This iteration builds the core vertical slice: add an expense and see it in a list, backed by local storage.
@@ -83,8 +86,24 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - Arrows only, no swipe gesture — considered, but arrows are simpler, need no new dependency, and are more discoverable/accessible (screen readers, no hidden gesture to find) than swipe-only navigation would be.
 - Because bottom tab screens stay mounted by default, navigating to a past month and switching to the Expenses tab and back preserves that selection — it doesn't silently reset to the current month.
 
-## Continuous integration
+### CSV Data Export (Iteration 8)
+- `src/utils/csv.ts` is a pure utility that transforms a list of `Expense` records into an RFC 4180-compliant CSV string, including escaping cell values containing commas, double quotes, or newlines.
+- `src/services/expenseExport.ts` converts the current expenses using the CSV utility, writes the file to the local device's cache directory via `expo-file-system/legacy`, and triggers the native OS sharing sheet using `expo-sharing`.
+- `src/components/ExpenseList.tsx` renders a ListHeaderComponent for the FlatList, adding a section label ("Recent Expenses") and a touchable "Export CSV" action link.
+- `src/screens/HistoryScreen.tsx` controls the `exporting` UI loading state and captures native file system or sharing failures, displaying them to the user via native `Alert` dialogs.
 
+### Splitting Ledger and Form Screens (Iteration 9)
+- `src/types/navigation.ts` holds type definitions for bottom tab routing and parameter passing.
+- `src/screens/AddScreen.tsx` manages logging new expenses and editing existing ones. Tapping an expense in the ledger passes the record via navigation parameters, shifting the form into "Edit Expense" mode. Cancel/Save actions reset parameters and return the user to the ledger.
+- `src/screens/HistoryScreen.tsx` presents the transaction ledger and handles navigation to edit mode.
+- Tab synchronization remains decoupled; focus hooks (`useFocusEffect`) reload AsyncStorage values whenever any screen becomes active, keeping the Add, History, and Chart tabs updated automatically.
+
+### Filter and Search in History (Iteration 10)
+- `src/screens/HistoryScreen.tsx` was extended with `searchQuery` and `selectedCategory` filters, computing a memoized `filteredExpenses` list. The interface adds a search input with a clear button, and a horizontal scrollable row of category chips.
+- `src/components/ExpenseList.tsx` was updated to accept `isFiltered`. If filters return zero results, it displays `"No matching expenses found."` rather than the default empty state.
+- Export triggers in `HistoryScreen.tsx` pass `filteredExpenses` to the CSV generator, allowing users to export custom filtered subsets.
+
+## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no
 separate "build" step: Expo managed-workflow apps don't have a plain
@@ -93,6 +112,6 @@ so typecheck + tests are the CI-appropriate checks for this stage of the
 project.
 
 ## Notes
-- The chart, tab bar, and date picker haven't been run through a simulator/device screenshot in this environment (no simulator available here) — verified via successful Android *and* iOS bundle exports (`npx expo export --platform android|ios`), TypeScript, and the test suite. The date picker in particular renders very differently per platform (inline pill on iOS, dialog on Android) — please check both if you can, or at least whichever platform you primarily use.
-- Deleting an expense on the Expenses tab and then switching to Chart shows the updated total right away — this relies on `useFocusEffect` re-loading on tab focus, not a shared store, since two screens didn't yet justify adding one.
+- The chart, tab bar, date picker, and export sheet haven't been run through a simulator/device screenshot in this environment (no simulator available here) — verified via successful Android *and* iOS bundle exports (`npx expo export --platform android|ios`), TypeScript, and the test suite. The date picker in particular renders very differently per platform (inline pill on iOS, dialog on Android) — please check both if you can, or at least whichever platform you primarily use.
+- Deleting an expense on the History tab and then switching to Chart shows the updated total right away — this relies on `useFocusEffect` re-loading on tab focus, not a shared store, since screens didn't yet justify adding one.
 - `AGENTS.md`, `claude.md`, and `BUILD_NOTES.md` are intentionally excluded from this repo (see `.gitignore`) — they're local build-process files, not part of the shipped app.
