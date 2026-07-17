@@ -1,9 +1,9 @@
 // src/hooks/useExpenses.ts
-// Shared data hook for the Expenses and Chart screens. Loads expenses on
+// Shared data hook for the Add, History, and Chart screens. Loads expenses on
 // mount and re-loads every time the owning screen regains focus (so adding
 // an expense on one tab shows up immediately when you switch to the other),
 // and exposes add/update/delete actions that refresh state afterward.
-// Connects to: src/services/expenseStorage.ts, src/screens/ExpensesScreen.tsx, src/screens/ChartScreen.tsx
+// Connects to: src/services/expenseStorage.ts, src/screens/AddScreen.tsx, src/screens/HistoryScreen.tsx, src/screens/ChartScreen.tsx
 // Created: 2026-07-12
 
 import { useCallback, useState } from 'react';

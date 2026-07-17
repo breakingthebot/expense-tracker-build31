@@ -5,7 +5,7 @@
 // storage. The parent should remount this component (e.g. via a `key` tied
 // to the expense id) when switching which expense is being edited, so field
 // state re-seeds correctly.
-// Connects to: src/config/categories.ts, src/utils/currency.ts, src/utils/date.ts, src/screens/ExpensesScreen.tsx
+// Connects to: src/config/categories.ts, src/utils/currency.ts, src/utils/date.ts, src/screens/AddScreen.tsx
 // Created: 2026-07-12
 
 import { useState } from 'react';

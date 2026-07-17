@@ -1,8 +1,8 @@
 // src/components/ScreenStatus.tsx
 // Shared loading spinner / error message shown while a screen's data is
-// still loading or failed to load. Extracted so ExpensesScreen and
+// still loading or failed to load. Extracted so HistoryScreen and
 // ChartScreen don't duplicate the same three style rules.
-// Connects to: src/hooks/useExpenses.ts, src/screens/ExpensesScreen.tsx, src/screens/ChartScreen.tsx
+// Connects to: src/hooks/useExpenses.ts, src/screens/HistoryScreen.tsx, src/screens/ChartScreen.tsx
 // Created: 2026-07-12
 
 import { ActivityIndicator, StyleSheet, Text } from 'react-native';
