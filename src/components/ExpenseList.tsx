@@ -2,7 +2,7 @@
 // Displays the saved expenses, most recent first. Tapping a row edits it;
 // tapping "Delete" removes it. Shows a dedicated empty state when there are
 // no expenses yet.
-// Connects to: src/models/expense.ts, src/utils/currency.ts, src/utils/date.ts, src/screens/ExpensesScreen.tsx
+// Connects to: src/models/expense.ts, src/utils/currency.ts, src/utils/date.ts, src/screens/HistoryScreen.tsx
 // Created: 2026-07-12
 
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -14,14 +14,26 @@ interface ExpenseListProps {
   expenses: Expense[];
   onEdit: (expense: Expense) => void;
   onDelete: (id: string) => void;
+  onExport: () => void;
+  exporting: boolean;
+  isFiltered?: boolean;
 }
 
 /** Renders the list of expenses, or an empty-state message when there are none. */
-export default function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
+export default function ExpenseList({
+  expenses,
+  onEdit,
+  onDelete,
+  onExport,
+  exporting,
+  isFiltered = false,
+}: ExpenseListProps) {
   if (expenses.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateText}>No expenses yet. Add your first one above.</Text>
+        <Text style={styles.emptyStateText}>
+          {isFiltered ? 'No matching expenses found.' : 'No expenses yet. Add your first one above.'}
+        </Text>
       </View>
     );
   }
@@ -31,6 +43,21 @@ export default function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListP
       data={expenses}
       keyExtractor={(expense) => expense.id}
       contentContainerStyle={styles.listContent}
+      ListHeaderComponent={
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Recent Expenses</Text>
+          <TouchableOpacity
+            onPress={onExport}
+            disabled={exporting}
+            accessibilityRole="button"
+            accessibilityLabel="Export expenses as CSV"
+          >
+            <Text style={[styles.exportButtonText, exporting && styles.exportButtonDisabledText]}>
+              {exporting ? 'Exporting...' : 'Export CSV'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      }
       renderItem={({ item }) => (
         <TouchableOpacity
           style={styles.row}
@@ -62,6 +89,28 @@ export default function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListP
 const styles = StyleSheet.create({
   listContent: {
     padding: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  headerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  exportButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2980b9',
+  },
+  exportButtonDisabledText: {
+    color: '#95a5a6',
   },
   row: {
     flexDirection: 'row',
