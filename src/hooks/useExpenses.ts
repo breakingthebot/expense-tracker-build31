@@ -31,6 +31,7 @@ import {
 import { generateExpensesFromSchedules } from '../services/recurringGenerator';
 import { validateCsvImport, ValidationResult } from '../services/csvImport';
 import { todayIsoDate } from '../utils/date';
+import { seedDemoData, clearAllData } from '../services/demoSeeder';
 import { logger } from '../utils/logger';
 
 const SCOPE = 'useExpenses';
@@ -69,6 +70,9 @@ interface UseExpensesResult {
   importTransactions: (csvContent: string) => Promise<ValidationResult>;
   setDefaultTxType: (type: TransactionType) => Promise<void>;
   reorderCategoriesList: (orderedIds: string[]) => Promise<void>;
+  seedDemoDataList: () => Promise<void>;
+  wipeAllStorageData: () => Promise<void>;
+  demoSeeded: boolean;
 }
 
 export function useExpenses(): UseExpensesResult {
@@ -77,6 +81,7 @@ export function useExpenses(): UseExpensesResult {
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgetGoals, setBudgetGoals] = useState<Record<string, number>>({});
   const [defaultTxType, setDefaultTxTypeState] = useState<TransactionType>('expense');
+  const [demoSeeded, setDemoSeeded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -120,6 +125,10 @@ export function useExpenses(): UseExpensesResult {
       if (savedType === 'expense' || savedType === 'income') {
         setDefaultTxTypeState(savedType as TransactionType);
       }
+
+      // 8. Load onboarding demo status
+      const seeded = await AsyncStorage.getItem('@expense_tracker/demo_seeded');
+      setDemoSeeded(seeded === 'true');
     } catch (error) {
       logger.error(SCOPE, 'Failed to load expenses, schedules, categories, or budgets', { error: String(error) });
       setLoadError(error instanceof Error ? error.message : 'Could not load your data.');
@@ -268,12 +277,33 @@ export function useExpenses(): UseExpensesResult {
     }
   }
 
+  async function seedDemoDataList() {
+    setSubmitting(true);
+    try {
+      await seedDemoData();
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function wipeAllStorageData() {
+    setSubmitting(true);
+    try {
+      await clearAllData();
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return {
     expenses,
     recurringSchedules,
     categories,
     budgetGoals,
     defaultTxType,
+    demoSeeded,
     loading,
     loadError,
     submitting,
@@ -289,5 +319,7 @@ export function useExpenses(): UseExpensesResult {
     importTransactions,
     setDefaultTxType,
     reorderCategoriesList,
+    seedDemoDataList,
+    wipeAllStorageData,
   };
 }

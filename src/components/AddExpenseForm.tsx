@@ -7,7 +7,7 @@
 // Created: 2026-07-12
 
 import { useState, useEffect } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
 import DatePicker from './DatePicker';
 import { ExpenseCategory } from '../config/categories';
 import { Expense, TransactionType } from '../models/expense';
@@ -16,6 +16,21 @@ import { Category } from '../services/categoryStorage';
 import { centsToInputString, parseDollarsToCents } from '../utils/currency';
 import { todayIsoDate } from '../utils/date';
 import { useTheme } from './ThemeProvider';
+
+const QUICK_PRESETS = [
+  { label: '☕ Coffee', amount: '4.50', category: 'Food', note: 'Coffee' },
+  { label: '🍔 Lunch', amount: '12.50', category: 'Food', note: 'Lunch' },
+  { label: '🛒 Groceries', amount: '75.00', category: 'Food', note: 'Groceries' },
+  { label: '⛽ Gas', amount: '45.00', category: 'Transportation', note: 'Gas fill-up' },
+  { label: '🚇 Transit', amount: '2.75', category: 'Transportation', note: 'Transit fare' },
+  { label: '🍿 Movie', amount: '15.00', category: 'Entertainment', note: 'Movie ticket' },
+];
+
+const QUICK_INCOME_PRESETS = [
+  { label: '💰 Paycheck', amount: '2000.00', category: 'Other', note: 'Salary Paycheck' },
+  { label: '💸 Refund', amount: '25.00', category: 'Other', note: 'Refund' },
+  { label: '🎁 Gift', amount: '50.00', category: 'Other', note: 'Gift' },
+];
 
 export interface AddFormSubmitData {
   amountCents: number;
@@ -67,6 +82,12 @@ export default function AddExpenseForm({
   const [isRecurring, setIsRecurring] = useState(false);
   const [interval, setInterval] = useState<RecurringInterval>('monthly');
   const [error, setError] = useState<string | null>(null);
+
+  const handleApplyPreset = (preset: { amount: string; category: string; note: string }) => {
+    setAmountText(preset.amount);
+    setCategory(preset.category);
+    setNote(preset.note);
+  };
 
   useEffect(() => {
     if (!isEditing) {
@@ -139,6 +160,32 @@ export default function AddExpenseForm({
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Quick Presets row */}
+      {!isEditing && (
+        <View style={styles.presetsContainer}>
+          <Text style={styles.presetsLabel}>Quick Presets:</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.presetsScroll}
+            contentContainerStyle={styles.presetsScrollContent}
+          >
+            {(type === 'expense' ? QUICK_PRESETS : QUICK_INCOME_PRESETS).map((p) => (
+              <TouchableOpacity
+                key={p.label}
+                onPress={() => handleApplyPreset(p)}
+                style={styles.presetChip}
+                disabled={submitting}
+                accessibilityRole="button"
+                accessibilityLabel={`Load preset ${p.label}`}
+              >
+                <Text style={styles.presetChipText}>{p.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
@@ -480,6 +527,36 @@ const createStyles = (colors: any, isDark: boolean) =>
     },
     frequencyButtonTextActive: {
       color: colors.primary,
+      fontWeight: '600',
+    },
+    presetsContainer: {
+      marginTop: 10,
+      marginBottom: 6,
+    },
+    presetsLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontWeight: '600',
+      marginBottom: 6,
+    },
+    presetsScroll: {
+      flexDirection: 'row',
+    },
+    presetsScrollContent: {
+      gap: 6,
+      paddingRight: 16,
+    },
+    presetChip: {
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      backgroundColor: colors.surface,
+    },
+    presetChipText: {
+      fontSize: 12,
+      color: colors.text,
       fontWeight: '600',
     },
   });

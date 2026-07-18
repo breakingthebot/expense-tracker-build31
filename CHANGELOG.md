@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.24.0] - 2026-07-18
+### Added
+- Interactive Demo Data Seeding. Created [demoSeeder.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/demoSeeder.ts) to seed a rich set of past/future transactions, budgets, and recurring schedules, and wrote unit tests in [demoSeeder.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/demoSeeder.test.ts).
+- Sleek welcome onboarding card on the Ledger Dashboard when the app has no transactions. It allows users to seed data or start empty with 1 tap.
+- Added a "Wipe Database" reset option inside the bulk CSV import modal allowing users to safely clear the application data tables.
+- Editable Quick Log Presets. Implemented a horizontal preset scrolling strip in [AddExpenseForm.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/AddExpenseForm.tsx). Tapping preset chips (like Coffee, Lunch, Groceries) pre-fills amount, category, and note fields for immediate adjustment before submitting.
+
 ## [0.23.0] - 2026-07-18
 ### Added
 - Interactive Category Reordering. Added `reorderCategories` inside [categoryStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/categoryStorage.ts) allowing custom category list rankings and wrote unit tests in [categoryStorage.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/categoryStorage.test.ts).

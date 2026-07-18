@@ -176,6 +176,11 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/hooks/useExpenses.ts` coordinates updating active local memory and refreshing focus data grids.
 - `src/screens/AddScreen.tsx` embeds up/down shift arrows in the categories Settings list modal. Reordering automatically affects lists on Add tabs, History filters, and Charts.
 
+### Onboarding Seeder & Quick Presets (Iteration 24)
+- `src/services/demoSeeder.ts` defines the mock database generator and storage wipe controllers.
+- `src/screens/HistoryScreen.tsx` renders a sleek first-launch Welcome banner to explore with sample data or wipe database contents instantly.
+- `src/components/AddExpenseForm.tsx` renders segmented preset chip bars which pre-populate input text fields with one click for easy adjustment.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

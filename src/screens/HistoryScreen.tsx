@@ -7,7 +7,7 @@
 // src/components/ThemeProvider.tsx
 // Created: 2026-07-17
 
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import {
   Alert,
   Modal,
@@ -20,6 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import ExpenseList from '../components/ExpenseList';
 import ScreenStatus from '../components/ScreenStatus';
@@ -47,10 +48,29 @@ export default function HistoryScreen() {
     removeExpense,
     categories,
     importTransactions,
+    seedDemoDataList,
+    wipeAllStorageData,
+    demoSeeded,
   } = useExpenses();
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | null>(null);
+
+  // Onboarding welcome status
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('@expense_tracker/dismissed_welcome').then((val) => {
+      if (val === 'true') {
+        setWelcomeDismissed(true);
+      }
+    });
+  }, []);
+
+  const handleDismissWelcome = async () => {
+    await AsyncStorage.setItem('@expense_tracker/dismissed_welcome', 'true');
+    setWelcomeDismissed(true);
+  };
 
   // Date Range Filter States
   const [datePreset, setDatePreset] = useState<'all' | 'this_week' | 'last_7_days' | 'this_month' | 'custom'>('all');
@@ -254,6 +274,35 @@ export default function HistoryScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Onboarding Welcome / Demo Seeder Card */}
+      {!loading && !loadError && expenses.length === 0 && recurringSchedules.length === 0 && !welcomeDismissed && (
+        <View style={styles.welcomeCard}>
+          <Text style={styles.welcomeEmoji}>🚀</Text>
+          <Text style={styles.welcomeTitle}>Welcome to your Expense Tracker!</Text>
+          <Text style={styles.welcomeText}>
+            Get started by adding a transaction, importing a CSV, or explore the features instantly using our pre-populated sample sandbox.
+          </Text>
+          <View style={styles.welcomeActions}>
+            <TouchableOpacity
+              style={styles.welcomeSeedButton}
+              onPress={async () => {
+                await seedDemoDataList();
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={styles.welcomeSeedButtonText}>🔮 Explore with Demo Data</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.welcomeStartButton}
+              onPress={handleDismissWelcome}
+              accessibilityRole="button"
+            >
+              <Text style={styles.welcomeStartButtonText}>Start Fresh</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Dynamic Ledger Dashboard Summary Card */}
       {!loading && !loadError && (
@@ -610,6 +659,32 @@ export default function HistoryScreen() {
                 </View>
               </View>
             )}
+
+            <TouchableOpacity
+              style={styles.modalWipeButton}
+              onPress={() => {
+                Alert.alert(
+                  'Wipe Database',
+                  'Are you sure you want to delete all transactions, recurring templates, and budget limits? This action is permanent.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Wipe Data',
+                      style: 'destructive',
+                      onPress: async () => {
+                        await wipeAllStorageData();
+                        await AsyncStorage.removeItem('@expense_tracker/dismissed_welcome');
+                        setWelcomeDismissed(false);
+                        setShowImportModal(false);
+                      },
+                    },
+                  ]
+                );
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={styles.modalWipeButtonText}>Wipe Database (Reset App)</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.modalCloseButton}
@@ -1156,5 +1231,85 @@ const createStyles = (colors: any, isDark: boolean) =>
       fontWeight: '600',
       color: colors.textSecondary,
       marginRight: 8,
+    },
+    welcomeCard: {
+      marginHorizontal: 16,
+      marginTop: 14,
+      marginBottom: 6,
+      padding: 20,
+      backgroundColor: colors.surface,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.25 : 0.08,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    welcomeEmoji: {
+      fontSize: 32,
+      marginBottom: 10,
+    },
+    welcomeTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      textAlign: 'center',
+      marginBottom: 8,
+    },
+    welcomeText: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 18,
+      marginBottom: 16,
+    },
+    welcomeActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      width: '100%',
+    },
+    welcomeSeedButton: {
+      flex: 1.3,
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: 10,
+      alignItems: 'center',
+    },
+    welcomeSeedButtonText: {
+      color: '#fff',
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    welcomeStartButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 8,
+      paddingVertical: 10,
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    welcomeStartButtonText: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    modalWipeButton: {
+      backgroundColor: isDark ? '#3d1616' : '#fde8e8',
+      borderWidth: 1,
+      borderColor: isDark ? '#802020' : '#f8b4b4',
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    modalWipeButtonText: {
+      color: isDark ? '#f8b4b4' : '#c81e1e',
+      fontWeight: '600',
+      fontSize: 14,
     },
   });
