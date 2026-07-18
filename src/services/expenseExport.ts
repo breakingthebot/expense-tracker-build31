@@ -17,7 +17,10 @@ const SCOPE = 'expenseExport';
  * and launches the platform's native share sheet.
  * Throws an Error with a user-facing message if conversion, writing, or sharing fails.
  */
-export async function exportExpensesToCsv(expenses: Expense[]): Promise<void> {
+export async function exportExpensesToCsv(
+  expenses: Expense[],
+  customFilenamePrefix?: string
+): Promise<void> {
   if (expenses.length === 0) {
     throw new Error('There are no expenses to export.');
   }
@@ -28,7 +31,8 @@ export async function exportExpensesToCsv(expenses: Expense[]): Promise<void> {
 
     // 2. Generate file path in the app's cache directory
     const timestamp = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
-    const filename = `expenses_export_${timestamp}.csv`;
+    const prefix = customFilenamePrefix?.trim() ? customFilenamePrefix.trim().replace(/[^a-zA-Z0-9_-]/g, '') : 'expenses_export';
+    const filename = `${prefix}_${timestamp}.csv`;
     const fileUri = `${FileSystem.documentDirectory}${filename}`;
 
     // 3. Write CSV string to file

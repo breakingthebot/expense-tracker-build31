@@ -186,6 +186,10 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/services/recurringGenerator.ts` implements generators simulating dates for these new schedules, dynamically driving forecasting balances.
 - `src/components/AddExpenseForm.tsx` renders the new intervals inside the recurring selection grid, with wrapped chip buttons.
 
+### Custom Export Filename Prefix (Iteration 26)
+- `src/services/expenseExport.ts` accepts an optional file name prefix and strips non-alphanumeric chars to guarantee valid target filenames.
+- `src/screens/HistoryScreen.tsx` embeds the Export Configuration Modal, handling filename prefixes and showing a live-updated filename preview path.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

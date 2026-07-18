@@ -65,6 +65,20 @@ describe('exportExpensesToCsv', () => {
     );
   });
 
+  it('respects a custom filename prefix parameter', async () => {
+    (Sharing.isAvailableAsync as jest.Mock).mockResolvedValue(true);
+    (FileSystem.writeAsStringAsync as jest.Mock).mockResolvedValue(undefined);
+    (Sharing.shareAsync as jest.Mock).mockResolvedValue(undefined);
+
+    await expect(exportExpensesToCsv(mockExpenses, 'my_custom_report')).resolves.not.toThrow();
+
+    expect(FileSystem.writeAsStringAsync).toHaveBeenCalledWith(
+      expect.stringContaining('mock-directory/my_custom_report_'),
+      expect.any(String),
+      expect.any(Object)
+    );
+  });
+
   it('throws an error if sharing is not available on the device', async () => {
     (Sharing.isAvailableAsync as jest.Mock).mockResolvedValue(false);
     (FileSystem.writeAsStringAsync as jest.Mock).mockResolvedValue(undefined);

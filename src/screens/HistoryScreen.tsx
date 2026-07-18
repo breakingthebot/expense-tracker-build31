@@ -53,6 +53,8 @@ export default function HistoryScreen() {
     demoSeeded,
   } = useExpenses();
   const [exporting, setExporting] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportPrefix, setExportPrefix] = useState('expenses_export');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | null>(null);
 
@@ -171,9 +173,18 @@ export default function HistoryScreen() {
   }
 
   async function handleExport() {
+    if (filteredExpenses.length === 0) {
+      Alert.alert('No Data', 'There are no transactions in the current range to export.');
+      return;
+    }
+    setShowExportModal(true);
+  }
+
+  async function executeExport() {
     setExporting(true);
     try {
-      await exportExpensesToCsv(filteredExpenses);
+      await exportExpensesToCsv(filteredExpenses, exportPrefix);
+      setShowExportModal(false);
     } catch (error) {
       logger.error(SCOPE, 'Export execution failed', { error: String(error) });
       Alert.alert('Export Failed', error instanceof Error ? error.message : 'Please try again.');
@@ -530,6 +541,58 @@ export default function HistoryScreen() {
           isFiltered={isFiltered}
         />
       )}
+
+      {/* Export CSV Configuration modal */}
+      <Modal
+        visible={showExportModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowExportModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Export Transactions</Text>
+            <Text style={styles.modalSubtitle}>Customize the filename for your export file:</Text>
+
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>File Name Prefix</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={exportPrefix}
+                onChangeText={setExportPrefix}
+                placeholder="expenses_export"
+                placeholderTextColor={colors.textMuted}
+                autoFocus
+              />
+              <Text style={styles.modalHelpText}>
+                Preview: {exportPrefix.trim().replace(/[^a-zA-Z0-9_-]/g, '') || 'expenses_export'}_{new Date().toISOString().slice(0, 10)}.csv
+              </Text>
+            </View>
+
+            <View style={styles.exportModalActions}>
+              <TouchableOpacity
+                style={styles.exportModalConfirmBtn}
+                onPress={executeExport}
+                disabled={exporting}
+                accessibilityRole="button"
+              >
+                <Text style={styles.exportConfirmBtnText}>
+                  {exporting ? 'Generating...' : '📤 Export & Share'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.exportModalCancelBtn}
+                onPress={() => setShowExportModal(false)}
+                disabled={exporting}
+                accessibilityRole="button"
+              >
+                <Text style={styles.exportCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Bulk CSV Upload overlay modal */}
       <Modal
@@ -1311,5 +1374,69 @@ const createStyles = (colors: any, isDark: boolean) =>
       color: isDark ? '#f8b4b4' : '#c81e1e',
       fontWeight: '600',
       fontSize: 14,
+    },
+    modalSubtitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: 16,
+    },
+    modalField: {
+      width: '100%',
+      marginBottom: 16,
+    },
+    modalLabel: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: 6,
+    },
+    modalInput: {
+      height: 44,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      color: colors.text,
+      fontSize: 14,
+      backgroundColor: colors.background,
+    },
+    modalHelpText: {
+      fontSize: 11,
+      color: colors.textMuted,
+      marginTop: 4,
+      fontStyle: 'italic',
+    },
+    exportModalActions: {
+      flexDirection: 'row',
+      gap: 10,
+      width: '100%',
+      marginTop: 10,
+    },
+    exportModalConfirmBtn: {
+      flex: 1.5,
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    exportConfirmBtnText: {
+      color: '#fff',
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    exportModalCancelBtn: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    exportCancelBtnText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '600',
     },
   });

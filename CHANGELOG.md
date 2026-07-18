@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.26.0] - 2026-07-18
+### Added
+- Custom Export Filename Prefix. Updated `exportExpensesToCsv` inside [expenseExport.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/expenseExport.ts) to accept an optional file name prefix parameter, and added unit test cases to [expenseExport.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/expenseExport.test.ts).
+- Sleek Export Configuration Modal inside [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx) with a filename preview banner that updates live as the user types their desired custom prefix.
+
 ## [0.25.0] - 2026-07-18
 ### Added
 - Expanded Recurring Intervals. Added Support for `biweekly` (every 2 weeks), `bimonthly` (every 2 months), `six_months` (every 6 months), and re-added `yearly` options to recurring schedulers in [recurring.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/models/recurring.ts).
