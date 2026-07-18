@@ -228,6 +228,10 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/BudgetProgressWidget.tsx` displays monthly spending progress details relative to category limits.
 - `src/screens/AddScreen.tsx` embeds the widget above settings launchers.
 
+### Category Budget Goal Audio Alerts (Iteration 36)
+- `src/services/soundService.ts` synthesizes tone frequencies programmatically using Web Audio API nodes.
+- `src/hooks/useExpenses.ts` triggers audio play events on budget goal crossings.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

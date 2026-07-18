@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.36.0] - 2026-07-18
+### Added
+- Category Budget Goal Overspent Sound Alerts. Created [soundService.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/soundService.ts) synthesizing rising chime tones programmatically using browser-native Web Audio API oscillators, triggering chimes immediately on budget threshold crossings.
+- Wrote sound synthesis mock tests in [soundService.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/soundService.test.ts).
+
 ## [0.35.0] - 2026-07-18
 ### Added
 - Dashboard Budget Progress Widget. Created [BudgetProgressWidget.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/BudgetProgressWidget.tsx) to render monthly budget status progress indicators colored in matching category styles directly on the main Add screen dashboard, highlighting overspent categories in warning formats.

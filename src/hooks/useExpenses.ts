@@ -37,6 +37,7 @@ import { getWeeklySpendingGoal, setWeeklySpendingGoal as setWeeklySpendingGoalCo
 import { useToast } from '../components/ToastProvider';
 import { formatCents } from '../utils/currency';
 import { isBudgetExceeded } from '../services/budgetAlert';
+import { playBudgetAlertSound } from '../services/soundService';
 import { logger } from '../utils/logger';
 
 const SCOPE = 'useExpenses';
@@ -193,6 +194,7 @@ export function useExpenses(): UseExpensesResult {
           'Budget Alert',
           `Spent ${formatCents(check.newSpent)} of your ${formatCents(check.limit)} budget for ${input.category}.`
         );
+        playBudgetAlertSound();
       }
     } finally {
       setSubmitting(false);
@@ -216,6 +218,7 @@ export function useExpenses(): UseExpensesResult {
           'Budget Alert',
           `Spent ${formatCents(check.newSpent)} of your ${formatCents(check.limit)} budget for ${input.category}.`
         );
+        playBudgetAlertSound();
       }
     } finally {
       setSubmitting(false);
