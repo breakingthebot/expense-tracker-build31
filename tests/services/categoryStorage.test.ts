@@ -1,5 +1,6 @@
 // tests/services/categoryStorage.test.ts
-// Unit tests for the dynamic category storage service.
+// Unit tests for the dynamic category storage service, verifying
+// relational database cascades across expenses, schedules, and budgets.
 // Connects to: src/services/categoryStorage.ts
 // Created: 2026-07-18
 
@@ -35,12 +36,12 @@ describe('categoryStorage', () => {
     await expect(addCategory('subscriptions', '#111')).rejects.toThrow();
   });
 
-  it('cascades renaming updates to existing expenses and recurring schedules', async () => {
+  it('cascades renaming updates to existing expenses, recurring schedules, and budgets', async () => {
     // Setup categories
     const categories = await getCategories();
     const foodCat = categories.find((c) => c.name === 'Food')!;
 
-    // Setup associated mock expense & schedule
+    // Setup associated mock expense, schedule, and budget goal
     const mockExpenses: Expense[] = [
       { id: 'exp-1', amountCents: 500, category: 'Food', note: 'Apples', date: '2026-07-18', createdAt: '' },
       { id: 'exp-2', amountCents: 800, category: 'Housing', note: 'Rent', date: '2026-07-18', createdAt: '' },
@@ -57,9 +58,14 @@ describe('categoryStorage', () => {
         createdAt: '',
       },
     ];
+    const mockBudgets = {
+      Food: 25000,
+      Housing: 100000,
+    };
 
     await AsyncStorage.setItem('@expense_tracker/expenses', JSON.stringify(mockExpenses));
     await AsyncStorage.setItem('@expense_tracker/recurring_schedules', JSON.stringify(mockSchedules));
+    await AsyncStorage.setItem('@expense_tracker/budget_goals', JSON.stringify(mockBudgets));
 
     // Rename 'Food' to 'Groceries'
     await renameCategory(foodCat.id, 'Groceries');
@@ -78,9 +84,16 @@ describe('categoryStorage', () => {
     const rawRec = await AsyncStorage.getItem('@expense_tracker/recurring_schedules');
     const freshRec: RecurringExpense[] = JSON.parse(rawRec!);
     expect(freshRec.find((s) => s.id === 'rec-1')!.category).toBe('Groceries');
+
+    // Verify budget goal cascaded
+    const rawBudgets = await AsyncStorage.getItem('@expense_tracker/budget_goals');
+    const freshBudgets = JSON.parse(rawBudgets!);
+    expect(freshBudgets.Groceries).toBe(25000);
+    expect(freshBudgets.Food).toBeUndefined();
+    expect(freshBudgets.Housing).toBe(100000);
   });
 
-  it('cascades category deletion by routing associated records to Other', async () => {
+  it('cascades category deletion by routing associated records to Other and clearing budgets', async () => {
     // Setup categories
     const categories = await getCategories();
     const shopCat = categories.find((c) => c.name === 'Shopping')!;
@@ -88,7 +101,13 @@ describe('categoryStorage', () => {
     const mockExpenses: Expense[] = [
       { id: 'exp-1', amountCents: 500, category: 'Shopping', note: 'Clothes', date: '2026-07-18', createdAt: '' },
     ];
+    const mockBudgets = {
+      Shopping: 15000,
+      Housing: 100000,
+    };
+
     await AsyncStorage.setItem('@expense_tracker/expenses', JSON.stringify(mockExpenses));
+    await AsyncStorage.setItem('@expense_tracker/budget_goals', JSON.stringify(mockBudgets));
 
     // Delete 'Shopping'
     await deleteCategory(shopCat.id);
@@ -100,6 +119,12 @@ describe('categoryStorage', () => {
     const rawExp = await AsyncStorage.getItem('@expense_tracker/expenses');
     const freshExp: Expense[] = JSON.parse(rawExp!);
     expect(freshExp[0].category).toBe('Other');
+
+    // Verify budget was cleared
+    const rawBudgets = await AsyncStorage.getItem('@expense_tracker/budget_goals');
+    const freshBudgets = JSON.parse(rawBudgets!);
+    expect(freshBudgets.Shopping).toBeUndefined();
+    expect(freshBudgets.Housing).toBe(100000);
   });
 
   it('prevents renaming or deleting system categories', async () => {

@@ -127,6 +127,11 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/screens/AddScreen.tsx` incorporates a modal allowing the user to configure categories inline, choosing from a premium 12-color swatch palette with double-tap delete confirmations.
 - Components read categories dynamically, decoupling color maps from static files to render views seamlessly.
 
+### Budget Goals (Iteration 15)
+- `src/services/budgetStorage.ts` provides I/O support for storing monthly category limits.
+- `src/screens/AddScreen.tsx` integrates inline budget setting inputs directly within the categories configurator modal.
+- `src/components/MonthlyChart.tsx` displays gridded progress bars (`$spent of $limit budget`) and warning alert labels (`⚠️ Over budget by $difference` in red) when spending overflows monthly budget goals.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

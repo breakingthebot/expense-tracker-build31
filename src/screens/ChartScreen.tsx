@@ -18,7 +18,7 @@ import { getTrendSummary } from '../services/trendSummary';
 import { formatMonthLabel, shiftMonthKey } from '../utils/date';
 
 export default function ChartScreen() {
-  const { expenses, categories, loading, loadError } = useExpenses();
+  const { expenses, categories, budgetGoals, loading, loadError } = useExpenses();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
   const [viewMode, setViewMode] = useState<'monthly' | 'trend'>('monthly');
 
@@ -103,7 +103,11 @@ export default function ChartScreen() {
 
           {/* Conditional Content Rendering */}
           {viewMode === 'monthly' ? (
-            <MonthlyChart summary={summary} categoryColors={categoryColors} />
+            <MonthlyChart
+              summary={summary}
+              categoryColors={categoryColors}
+              budgetGoals={budgetGoals}
+            />
           ) : (
             <TrendChart
               trends={trendSummary}

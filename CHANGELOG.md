@@ -3,6 +3,18 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.15.0] - 2026-07-18
+### Added
+- Monthly category budget goals. Created [budgetStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/budgetStorage.ts) to read, write, and clear spending limits.
+- Inline budget configuration setters inside the categories modal on [AddScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/AddScreen.tsx).
+- Real-time spending progress bars and warning status labels (e.g. `⚠️ Over budget by $X.XX`) aligned underneath horizontal tracks in [MonthlyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/MonthlyChart.tsx).
+- 3 new unit tests in [budgetStorage.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/budgetStorage.test.ts) (67 tests total).
+
+### Changed
+- Refactored [categoryStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/categoryStorage.ts) to cascade rename and delete updates to budget goals.
+- Expanded [categoryStorage.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/categoryStorage.test.ts) to verify budget cascades.
+- Updated [useExpenses.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/hooks/useExpenses.ts) and [ChartScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ChartScreen.tsx) to coordinate budget target loaders and data props.
+
 ## [0.14.0] - 2026-07-18
 ### Added
 - Dynamic category creation and management. Created [categoryStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/categoryStorage.ts) to seed 8 default categories, validate additions, handle inline renaming, and perform cascading updates on rename and delete events.

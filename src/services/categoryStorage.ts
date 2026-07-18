@@ -1,7 +1,7 @@
 // src/services/categoryStorage.ts
 // Manages AsyncStorage I/O for dynamic expense categories, seeding the initial
 // set of 8 defaults on first load. Handles cascading renames and deletions
-// across both single transaction records and recurring schedules.
+// across transaction records, recurring schedules, and budget goals.
 // Connects to: src/models/expense.ts, src/models/recurring.ts, src/utils/logger.ts, src/utils/id.ts
 // Created: 2026-07-18
 
@@ -21,6 +21,7 @@ export interface Category {
 const CATEGORIES_STORAGE_KEY = '@expense_tracker/categories';
 const EXPENSES_STORAGE_KEY = '@expense_tracker/expenses';
 const RECURRING_STORAGE_KEY = '@expense_tracker/recurring_schedules';
+const BUDGETS_STORAGE_KEY = '@expense_tracker/budget_goals';
 const SCOPE = 'categoryStorage';
 
 const DEFAULT_CATEGORIES: Category[] = [
@@ -91,8 +92,8 @@ export async function addCategory(name: string, color: string): Promise<Category
 }
 
 /**
- * Renames a category, performing a cascading update across existing expenses
- * and recurring schedules.
+ * Renames a category, performing a cascading update across existing expenses,
+ * recurring schedules, and budget goals.
  */
 export async function renameCategory(id: string, newName: string): Promise<void> {
   const cleanName = newName.trim();
@@ -123,22 +124,31 @@ export async function renameCategory(id: string, newName: string): Promise<void>
   const oldName = targetCategory.name;
   targetCategory.name = cleanName;
 
-  // 1. Read existing expenses & schedules
+  // 1. Read existing expenses, schedules & budgets
   const rawExpenses = await AsyncStorage.getItem(EXPENSES_STORAGE_KEY);
   const expenses: Expense[] = rawExpenses ? JSON.parse(rawExpenses) : [];
 
   const rawSchedules = await AsyncStorage.getItem(RECURRING_STORAGE_KEY);
   const schedules: RecurringExpense[] = rawSchedules ? JSON.parse(rawSchedules) : [];
 
+  const rawBudgets = await AsyncStorage.getItem(BUDGETS_STORAGE_KEY);
+  const budgets: Record<string, number> = rawBudgets ? JSON.parse(rawBudgets) : {};
+
   // 2. Cascade rename updates
   const updatedExpenses = expenses.map((e) => (e.category === oldName ? { ...e, category: cleanName } : e));
   const updatedSchedules = schedules.map((s) => (s.category === oldName ? { ...s, category: cleanName } : s));
+
+  if (budgets[oldName] !== undefined) {
+    budgets[cleanName] = budgets[oldName];
+    delete budgets[oldName];
+  }
 
   // 3. Batch save everything
   await AsyncStorage.multiSet([
     [CATEGORIES_STORAGE_KEY, JSON.stringify(categories)],
     [EXPENSES_STORAGE_KEY, JSON.stringify(updatedExpenses)],
     [RECURRING_STORAGE_KEY, JSON.stringify(updatedSchedules)],
+    [BUDGETS_STORAGE_KEY, JSON.stringify(budgets)],
   ]);
 
   logger.info(SCOPE, 'Category renamed (cascading)', { id, oldName, newName: cleanName });
@@ -146,7 +156,7 @@ export async function renameCategory(id: string, newName: string): Promise<void>
 
 /**
  * Deletes a category, re-categorizing all associated expenses and schedules
- * to the default 'Other' category.
+ * to the default 'Other' category, and clearing any associated budget goals.
  */
 export async function deleteCategory(id: string): Promise<void> {
   const categories = await getCategories();
@@ -161,22 +171,30 @@ export async function deleteCategory(id: string): Promise<void> {
   const oldName = target.name;
   const filteredCategories = categories.filter((c) => c.id !== id);
 
-  // 1. Read existing expenses & schedules
+  // 1. Read existing expenses, schedules & budgets
   const rawExpenses = await AsyncStorage.getItem(EXPENSES_STORAGE_KEY);
   const expenses: Expense[] = rawExpenses ? JSON.parse(rawExpenses) : [];
 
   const rawSchedules = await AsyncStorage.getItem(RECURRING_STORAGE_KEY);
   const schedules: RecurringExpense[] = rawSchedules ? JSON.parse(rawSchedules) : [];
 
+  const rawBudgets = await AsyncStorage.getItem(BUDGETS_STORAGE_KEY);
+  const budgets: Record<string, number> = rawBudgets ? JSON.parse(rawBudgets) : {};
+
   // 2. Cascade delete (re-route to 'Other')
   const updatedExpenses = expenses.map((e) => (e.category === oldName ? { ...e, category: 'Other' } : e));
   const updatedSchedules = schedules.map((s) => (s.category === oldName ? { ...s, category: 'Other' } : s));
+
+  if (budgets[oldName] !== undefined) {
+    delete budgets[oldName];
+  }
 
   // 3. Batch save everything
   await AsyncStorage.multiSet([
     [CATEGORIES_STORAGE_KEY, JSON.stringify(filteredCategories)],
     [EXPENSES_STORAGE_KEY, JSON.stringify(updatedExpenses)],
     [RECURRING_STORAGE_KEY, JSON.stringify(updatedSchedules)],
+    [BUDGETS_STORAGE_KEY, JSON.stringify(budgets)],
   ]);
 
   logger.info(SCOPE, 'Category deleted (cascading to Other)', { id, name: oldName });

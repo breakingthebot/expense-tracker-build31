@@ -1,9 +1,11 @@
 // src/screens/AddScreen.tsx
 // "Add" tab screen: renders the AddExpenseForm inside a ScrollView,
 // and lists active recurring expense schedules. Features a "Manage Categories"
-// button and modal allowing the user to create, rename (inline), or delete custom
-// categories using a gorgeous 12-color swatch.
-// Connects to: src/components/AddExpenseForm.tsx, src/hooks/useExpenses.ts, src/utils/currency.ts
+// button and modal allowing the user to create, rename, or delete custom
+// categories using a gorgeous 12-color swatch, as well as set and edit monthly
+// budget limits per category.
+// Connects to: src/components/AddExpenseForm.tsx, src/hooks/useExpenses.ts,
+// src/utils/currency.ts, src/services/budgetStorage.ts
 // Created: 2026-07-17
 
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
@@ -21,7 +23,7 @@ import {
 import AddExpenseForm, { AddFormSubmitData } from '../components/AddExpenseForm';
 import { useExpenses } from '../hooks/useExpenses';
 import { TabParamList } from '../types/navigation';
-import { formatCents } from '../utils/currency';
+import { formatCents, parseDollarsToCents, centsToInputString } from '../utils/currency';
 
 const PALETTE_COLORS = [
   '#e34948', // Red
@@ -52,6 +54,8 @@ export default function AddScreen() {
     addNewCategory,
     editCategoryName,
     removeCategory,
+    budgetGoals,
+    updateBudgetGoal,
   } = useExpenses();
 
   const editingExpense = route.params?.editingExpense;
@@ -64,6 +68,10 @@ export default function AddScreen() {
   const [editingCatName, setEditingCatName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [catError, setCatError] = useState<string | null>(null);
+
+  // Budget editing states inside the modal
+  const [editingBudgetCatName, setEditingBudgetCatName] = useState<string | null>(null);
+  const [editingBudgetText, setEditingBudgetText] = useState('');
 
   async function handleFormSubmit(input: AddFormSubmitData) {
     if (editingExpense) {
@@ -140,6 +148,22 @@ export default function AddScreen() {
     }
   }
 
+  async function handleSaveBudget(categoryName: string) {
+    setCatError(null);
+    const parsed = parseDollarsToCents(editingBudgetText);
+    if (parsed === null || parsed < 0) {
+      setCatError('Please enter a valid budget amount, e.g. 150.00');
+      return;
+    }
+    try {
+      await updateBudgetGoal(categoryName, parsed);
+      setEditingBudgetCatName(null);
+      setEditingBudgetText('');
+    } catch (err) {
+      setCatError(err instanceof Error ? err.message : 'Could not save budget goal.');
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
@@ -162,9 +186,9 @@ export default function AddScreen() {
                 setShowCatModal(true);
               }}
               accessibilityRole="button"
-              accessibilityLabel="Manage custom categories"
+              accessibilityLabel="Manage custom categories and budget targets"
             >
-              <Text style={styles.configButtonText}>⚙️ Manage Categories</Text>
+              <Text style={styles.configButtonText}>⚙️ Manage Categories & Budgets</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -198,7 +222,7 @@ export default function AddScreen() {
         )}
       </ScrollView>
 
-      {/* Manage Categories Modal */}
+      {/* Manage Categories & Budgets Modal */}
       <Modal
         visible={showCatModal}
         animationType="slide"
@@ -207,7 +231,7 @@ export default function AddScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Manage Categories</Text>
+            <Text style={styles.modalTitle}>Manage Categories & Budgets</Text>
 
             {/* Quick Add Sub-Form */}
             <View style={styles.modalAddCard}>
@@ -254,83 +278,155 @@ export default function AddScreen() {
 
             {catError && <Text style={styles.modalError}>{catError}</Text>}
 
-            {/* Categories Scrolling List */}
+            {/* Categories & Budgets Scrolling List */}
             <ScrollView style={styles.modalList} contentContainerStyle={styles.modalListContent}>
               {categories.map((cat) => {
                 const isEditingThis = editingCatId === cat.id;
                 const isConfirmingDelete = confirmDeleteId === cat.id;
+                const isEditingBudget = editingBudgetCatName === cat.name;
+                const currentBudget = budgetGoals[cat.name] ?? 0;
 
                 return (
                   <View key={cat.id} style={styles.modalListItem}>
-                    <View style={[styles.bulletCircle, { backgroundColor: cat.color }]} />
+                    <View style={styles.itemMainRow}>
+                      <View style={[styles.bulletCircle, { backgroundColor: cat.color }]} />
 
-                    {isEditingThis ? (
-                      <View style={styles.modalEditContainer}>
-                        <TextInput
-                          style={styles.modalEditInput}
-                          value={editingCatName}
-                          onChangeText={setEditingCatName}
-                          autoFocus
-                          accessibilityLabel="Edit category name"
-                        />
-                        <TouchableOpacity
-                          style={styles.modalSaveButton}
-                          onPress={() => handleSaveRename(cat.id)}
-                          accessibilityRole="button"
-                        >
-                          <Text style={styles.modalSaveButtonText}>✓</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.modalCancelButton}
-                          onPress={() => {
-                            setEditingCatId(null);
-                            setEditingCatName('');
-                          }}
-                          accessibilityRole="button"
-                        >
-                          <Text style={styles.modalCancelButtonText}>✕</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <>
-                        <Text style={styles.modalItemText}>{cat.name}</Text>
-                        {cat.isSystem ? (
-                          <Text style={styles.systemTag}>System</Text>
-                        ) : (
-                          <View style={styles.modalItemActions}>
+                      {isEditingThis ? (
+                        <View style={styles.modalEditContainer}>
+                          <TextInput
+                            style={styles.modalEditInput}
+                            value={editingCatName}
+                            onChangeText={setEditingCatName}
+                            autoFocus
+                            accessibilityLabel="Edit category name"
+                          />
+                          <TouchableOpacity
+                            style={styles.modalSaveButton}
+                            onPress={() => handleSaveRename(cat.id)}
+                            accessibilityRole="button"
+                          >
+                            <Text style={styles.modalSaveButtonText}>✓</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.modalCancelButton}
+                            onPress={() => {
+                              setEditingCatId(null);
+                              setEditingCatName('');
+                            }}
+                            accessibilityRole="button"
+                          >
+                            <Text style={styles.modalCancelButtonText}>✕</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <>
+                          <Text style={styles.modalItemText}>{cat.name}</Text>
+                          {cat.isSystem ? (
+                            <Text style={styles.systemTag}>System</Text>
+                          ) : (
+                            <View style={styles.modalItemActions}>
+                              <TouchableOpacity
+                                style={styles.modalItemEdit}
+                                onPress={() => {
+                                  setEditingCatId(cat.id);
+                                  setEditingCatName(cat.name);
+                                }}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Rename category ${cat.name}`}
+                              >
+                                <Text style={styles.modalItemEditText}>✎</Text>
+                              </TouchableOpacity>
+
+                              <TouchableOpacity
+                                style={[
+                                  styles.modalItemDelete,
+                                  isConfirmingDelete && styles.modalItemDeleteConfirm,
+                                ]}
+                                onPress={() => handleDeleteCategory(cat.id)}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Delete category ${cat.name}`}
+                              >
+                                <Text
+                                  style={[
+                                    styles.modalItemDeleteText,
+                                    isConfirmingDelete && styles.modalItemDeleteTextConfirm,
+                                  ]}
+                                >
+                                  {isConfirmingDelete ? 'Confirm?' : '✕'}
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </>
+                      )}
+                    </View>
+
+                    {/* Inline Budget Setter Row */}
+                    {!isEditingThis && (
+                      <View style={styles.budgetRow}>
+                        {isEditingBudget ? (
+                          <View style={styles.budgetEditInline}>
+                            <TextInput
+                              style={styles.budgetInput}
+                              value={editingBudgetText}
+                              onChangeText={setEditingBudgetText}
+                              placeholder="0.00 limit"
+                              placeholderTextColor="#999"
+                              keyboardType="decimal-pad"
+                              autoFocus
+                              accessibilityLabel={`Limit for ${cat.name}`}
+                            />
                             <TouchableOpacity
-                              style={styles.modalItemEdit}
+                              style={styles.budgetSaveButton}
+                              onPress={() => handleSaveBudget(cat.name)}
+                              accessibilityRole="button"
+                            >
+                              <Text style={styles.budgetSaveButtonText}>Save</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.budgetCancelButton}
                               onPress={() => {
-                                setEditingCatId(cat.id);
-                                setEditingCatName(cat.name);
+                                setEditingBudgetCatName(null);
+                                setEditingBudgetText('');
                               }}
                               accessibilityRole="button"
-                              accessibilityLabel={`Rename category ${cat.name}`}
                             >
-                              <Text style={styles.modalItemEditText}>✎</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                              style={[
-                                styles.modalItemDelete,
-                                isConfirmingDelete && styles.modalItemDeleteConfirm,
-                              ]}
-                              onPress={() => handleDeleteCategory(cat.id)}
-                              accessibilityRole="button"
-                              accessibilityLabel={`Delete category ${cat.name}`}
-                            >
-                              <Text
-                                style={[
-                                  styles.modalItemDeleteText,
-                                  isConfirmingDelete && styles.modalItemDeleteTextConfirm,
-                                ]}
-                              >
-                                {isConfirmingDelete ? 'Confirm?' : '✕'}
-                              </Text>
+                              <Text style={styles.budgetCancelButtonText}>✕</Text>
                             </TouchableOpacity>
                           </View>
+                        ) : currentBudget > 0 ? (
+                          <View style={styles.budgetDisplayRow}>
+                            <Text style={styles.budgetDisplayText}>
+                              Budget Limit: <Text style={styles.budgetValue}>{formatCents(currentBudget)}</Text>/mo
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() => {
+                                setEditingBudgetCatName(cat.name);
+                                setEditingBudgetText(centsToInputString(currentBudget));
+                              }}
+                              accessibilityRole="button"
+                            >
+                              <Text style={styles.budgetActionEdit}>Edit</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => updateBudgetGoal(cat.name, 0)}
+                              accessibilityRole="button"
+                            >
+                              <Text style={styles.budgetActionClear}>Remove</Text>
+                            </TouchableOpacity>
+                          </View>
+                        ) : (
+                          <TouchableOpacity
+                            onPress={() => {
+                              setEditingBudgetCatName(cat.name);
+                              setEditingBudgetText('');
+                            }}
+                            accessibilityRole="button"
+                          >
+                            <Text style={styles.setBudgetLink}>＋ Set Monthly Budget Goal</Text>
+                          </TouchableOpacity>
                         )}
-                      </>
+                      </View>
                     )}
                   </View>
                 );
@@ -540,11 +636,13 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   modalListItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#f3f3f3',
+  },
+  itemMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   bulletCircle: {
     width: 14,
@@ -662,5 +760,76 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
+  },
+  // Budget Swatch Styles
+  budgetRow: {
+    paddingLeft: 24,
+    marginTop: 6,
+  },
+  setBudgetLink: {
+    fontSize: 11,
+    color: '#2f6feb',
+    fontWeight: '600',
+  },
+  budgetDisplayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  budgetDisplayText: {
+    fontSize: 11,
+    color: '#666',
+  },
+  budgetValue: {
+    fontWeight: '700',
+    color: '#444',
+  },
+  budgetActionEdit: {
+    fontSize: 11,
+    color: '#2f6feb',
+    textDecorationLine: 'underline',
+  },
+  budgetActionClear: {
+    fontSize: 11,
+    color: '#ef4444',
+    textDecorationLine: 'underline',
+  },
+  budgetEditInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  budgetInput: {
+    width: 90,
+    borderWidth: 1,
+    borderColor: '#2f6feb',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    fontSize: 12,
+    backgroundColor: '#fff',
+    color: '#333',
+  },
+  budgetSaveButton: {
+    backgroundColor: '#1baf7a',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  budgetSaveButtonText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  budgetCancelButton: {
+    backgroundColor: '#666',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  budgetCancelButtonText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
 });

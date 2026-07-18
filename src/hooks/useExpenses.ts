@@ -1,10 +1,10 @@
 // src/hooks/useExpenses.ts
 // Shared data hook for the Add, History, and Chart screens. Loads expenses,
-// active recurring schedules, and custom categories on focus. Executes the
-// recurring expense generator to catch up on any due items, and exposes CRUD
-// operations for transactions, schedules, and categories.
+// active recurring schedules, custom categories, and monthly budget goals on focus.
+// Executes the recurring expense generator to catch up on any due items, and exposes
+// CRUD operations for transactions, schedules, categories, and budget goals.
 // Connects to: src/services/expenseStorage.ts, src/services/recurringStorage.ts,
-// src/services/recurringGenerator.ts, src/services/categoryStorage.ts, src/utils/date.ts
+// src/services/recurringGenerator.ts, src/services/categoryStorage.ts, src/services/budgetStorage.ts, src/utils/date.ts
 // Created: 2026-07-12
 
 import { useCallback, useState } from 'react';
@@ -12,6 +12,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Expense, NewExpenseInput } from '../models/expense';
 import { NewRecurringInput, RecurringExpense } from '../models/recurring';
 import { Category } from '../services/categoryStorage';
+import { getBudgetGoals, setBudgetGoal } from '../services/budgetStorage';
 import {
   addExpense,
   deleteExpense,
@@ -40,6 +41,7 @@ interface UseExpensesResult {
   expenses: Expense[];
   recurringSchedules: RecurringExpense[];
   categories: Category[];
+  budgetGoals: Record<string, number>;
   loading: boolean;
   loadError: string | null;
   submitting: boolean;
@@ -51,12 +53,14 @@ interface UseExpensesResult {
   addNewCategory: (name: string, color: string) => Promise<void>;
   editCategoryName: (id: string, newName: string) => Promise<void>;
   removeCategory: (id: string) => Promise<void>;
+  updateBudgetGoal: (category: string, limitCents: number) => Promise<void>;
 }
 
 export function useExpenses(): UseExpensesResult {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [recurringSchedules, setRecurringSchedules] = useState<RecurringExpense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [budgetGoals, setBudgetGoals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -90,8 +94,12 @@ export function useExpenses(): UseExpensesResult {
       // 5. Fetch the full list of sorted expenses
       const stored = await getAllExpenses();
       setExpenses(stored);
+
+      // 6. Fetch monthly category budget goals
+      const goals = await getBudgetGoals();
+      setBudgetGoals(goals);
     } catch (error) {
-      logger.error(SCOPE, 'Failed to load expenses, schedules, or categories', { error: String(error) });
+      logger.error(SCOPE, 'Failed to load expenses, schedules, categories, or budgets', { error: String(error) });
       setLoadError(error instanceof Error ? error.message : 'Could not load your data.');
     } finally {
       setLoading(false);
@@ -174,10 +182,21 @@ export function useExpenses(): UseExpensesResult {
     }
   }
 
+  async function updateBudgetGoal(category: string, limitCents: number) {
+    setSubmitting(true);
+    try {
+      await setBudgetGoal(category, limitCents);
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return {
     expenses,
     recurringSchedules,
     categories,
+    budgetGoals,
     loading,
     loadError,
     submitting,
@@ -189,5 +208,6 @@ export function useExpenses(): UseExpensesResult {
     addNewCategory,
     editCategoryName,
     removeCategory,
+    updateBudgetGoal,
   };
 }
