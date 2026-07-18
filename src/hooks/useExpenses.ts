@@ -32,6 +32,7 @@ import { generateExpensesFromSchedules } from '../services/recurringGenerator';
 import { validateCsvImport, ValidationResult } from '../services/csvImport';
 import { todayIsoDate } from '../utils/date';
 import { seedDemoData, clearAllData } from '../services/demoSeeder';
+import { getStartingBalanceConfig, setStartingBalanceConfig } from '../services/startingBalanceStorage';
 import { logger } from '../utils/logger';
 
 const SCOPE = 'useExpenses';
@@ -55,6 +56,8 @@ interface UseExpensesResult {
   categories: Category[];
   budgetGoals: Record<string, number>;
   defaultTxType: TransactionType;
+  startingBalance: number;
+  startingBalanceDate: string;
   loading: boolean;
   loadError: string | null;
   submitting: boolean;
@@ -67,6 +70,7 @@ interface UseExpensesResult {
   editCategoryName: (id: string, newName: string) => Promise<void>;
   removeCategory: (id: string) => Promise<void>;
   updateBudgetGoal: (category: string, limitCents: number) => Promise<void>;
+  updateStartingBalance: (balanceCents: number, startDate: string) => Promise<void>;
   importTransactions: (csvContent: string) => Promise<ValidationResult>;
   setDefaultTxType: (type: TransactionType) => Promise<void>;
   reorderCategoriesList: (orderedIds: string[]) => Promise<void>;
@@ -81,6 +85,8 @@ export function useExpenses(): UseExpensesResult {
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgetGoals, setBudgetGoals] = useState<Record<string, number>>({});
   const [defaultTxType, setDefaultTxTypeState] = useState<TransactionType>('expense');
+  const [startingBalance, setStartingBalance] = useState<number>(0);
+  const [startingBalanceDate, setStartingBalanceDate] = useState<string>('');
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -129,6 +135,11 @@ export function useExpenses(): UseExpensesResult {
       // 8. Load onboarding demo status
       const seeded = await AsyncStorage.getItem('@expense_tracker/demo_seeded');
       setDemoSeeded(seeded === 'true');
+
+      // 9. Load starting balance configurations
+      const startingBalConfig = await getStartingBalanceConfig();
+      setStartingBalance(startingBalConfig.balanceCents);
+      setStartingBalanceDate(startingBalConfig.startDate);
     } catch (error) {
       logger.error(SCOPE, 'Failed to load expenses, schedules, categories, or budgets', { error: String(error) });
       setLoadError(error instanceof Error ? error.message : 'Could not load your data.');
@@ -297,12 +308,24 @@ export function useExpenses(): UseExpensesResult {
     }
   }
 
+  async function updateStartingBalance(balanceCents: number, startDate: string) {
+    setSubmitting(true);
+    try {
+      await setStartingBalanceConfig(balanceCents, startDate);
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return {
     expenses,
     recurringSchedules,
     categories,
     budgetGoals,
     defaultTxType,
+    startingBalance,
+    startingBalanceDate,
     demoSeeded,
     loading,
     loadError,
@@ -316,6 +339,7 @@ export function useExpenses(): UseExpensesResult {
     editCategoryName,
     removeCategory,
     updateBudgetGoal,
+    updateStartingBalance,
     importTransactions,
     setDefaultTxType,
     reorderCategoriesList,

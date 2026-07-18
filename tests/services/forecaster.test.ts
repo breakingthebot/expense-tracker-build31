@@ -91,4 +91,23 @@ describe('forecastBalance', () => {
     const simulatedItems = result.items.filter((item) => item.isSimulated);
     expect(simulatedItems).toHaveLength(3);
   });
+
+  it('respects starting balance and filters transactions by starting date correctly', () => {
+    // Starting balance of $1000 (100000 cents) on 2026-07-12
+    // Logged transactions:
+    // - 2026-07-10: Grocery -$100 (ignored because < startingDate 2026-07-12)
+    // - 2026-07-15: Salary +$500 (included because >= startingDate and <= today 2026-07-18)
+    // Current balance should be $1000 + $500 = $1500 (150000 cents)
+    const result = forecastBalance(mockExpenses, mockSchedules, '2026-08-05', '2026-07-18', 100000, '2026-07-12');
+
+    expect(result.currentBalanceCents).toBe(150000);
+
+    // Projected future items after today 2026-07-18:
+    // - 2026-07-24: Weekly streaming -$50
+    // - 2026-07-25: Manual future Utilities -$200
+    // - 2026-07-31: Weekly streaming -$50
+    // - 2026-08-01: Monthly salary +$1000
+    // Total projected balance = $1500 - $50 - $200 - $50 + $1000 = $2200 (220000 cents)
+    expect(result.projectedBalanceCents).toBe(220000);
+  });
 });

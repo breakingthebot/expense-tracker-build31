@@ -13,6 +13,7 @@ import { KeyboardAvoidingView, Modal, Platform, SafeAreaView, StyleSheet, Text, 
 import MonthlyChart from '../components/MonthlyChart';
 import WeeklyChart from '../components/WeeklyChart';
 import TrendChart from '../components/TrendChart';
+import ForecastView from '../components/ForecastView';
 import ScreenStatus from '../components/ScreenStatus';
 import { useExpenses } from '../hooks/useExpenses';
 import { currentMonthKey, summarizeMonth, summarizeWeeks } from '../services/monthlySummary';
@@ -23,16 +24,20 @@ import { useTheme } from '../components/ThemeProvider';
 export default function ChartScreen() {
   const {
     expenses,
+    recurringSchedules,
     categories,
     budgetGoals,
     defaultTxType,
     setDefaultTxType,
+    startingBalance,
+    startingBalanceDate,
+    updateStartingBalance,
     updateBudgetGoal,
     loading,
     loadError,
   } = useExpenses();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
-  const [viewMode, setViewMode] = useState<'monthly' | 'weekly' | 'trend'>('monthly');
+  const [viewMode, setViewMode] = useState<'monthly' | 'weekly' | 'trend' | 'forecast'>('monthly');
 
   // Budget Edit Modal States
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
@@ -192,6 +197,16 @@ export default function ChartScreen() {
                 Trends
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleButton, viewMode === 'forecast' && styles.toggleButtonActive]}
+              onPress={() => setViewMode('forecast')}
+              accessibilityRole="button"
+              accessibilityLabel="View forward-looking cash flow forecast"
+            >
+              <Text style={[styles.toggleText, viewMode === 'forecast' && styles.toggleTextActive]}>
+                Forecast
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Conditional Content Rendering */}
@@ -215,6 +230,15 @@ export default function ChartScreen() {
               trends={trendSummary}
               latestMonthLabel={formatMonthLabel(monthKey)}
               categoryColors={categoryColors}
+            />
+          )}
+          {viewMode === 'forecast' && (
+            <ForecastView
+              expenses={expenses}
+              recurringSchedules={recurringSchedules}
+              startingBalance={startingBalance}
+              startingBalanceDate={startingBalanceDate}
+              onUpdateStartingBalance={updateStartingBalance}
             />
           )}
         </>

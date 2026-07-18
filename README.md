@@ -209,6 +209,11 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/MonthlyChart.tsx` transforms category rows into touch triggers with setting guide link helpers.
 - `src/screens/ChartScreen.tsx` embeds the custom Budget Goal Edit Modal with text fields and clean action buttons, binding triggers to update budget limits instantly.
 
+### Starting Balance & Future Forecasting (Iteration 32)
+- `src/services/startingBalanceStorage.ts` provides AsyncStorage saving for the baseline starting balance amount and starting date.
+- `src/components/ForecastView.tsx` displays active balance projection cards, starting baseline config form fields, target date selection, and chronologically sorted future cash transactions.
+- `src/screens/ChartScreen.tsx` connects the view switcher toggle triggers and updates local states.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

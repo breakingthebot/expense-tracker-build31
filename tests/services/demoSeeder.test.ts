@@ -33,6 +33,9 @@ describe('demoSeeder', () => {
 
   it('wipes database correct mock storage data', async () => {
     await seedDemoData();
+    await AsyncStorage.setItem('@expense_tracker/starting_balance', '1000');
+    await AsyncStorage.setItem('@expense_tracker/starting_balance_date', '2026-07-01');
+
     await clearAllData();
 
     const expenses = await AsyncStorage.getItem('@expense_tracker/expenses');
@@ -43,5 +46,8 @@ describe('demoSeeder', () => {
 
     const budgets = await AsyncStorage.getItem('@expense_tracker/budget_goals');
     expect(budgets).toBeNull();
+
+    const bal = await AsyncStorage.getItem('@expense_tracker/starting_balance');
+    expect(bal).toBeNull();
   });
 });

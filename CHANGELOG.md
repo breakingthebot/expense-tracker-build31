@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.32.0] - 2026-07-18
+### Added
+- Forward-Looking Cash Flow Forecast. Created [ForecastView.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ForecastView.tsx) displaying a projected balance graph/timeline, simulated recurring schedules, and a chronological ledger of running balances up to selectable future dates.
+- Starting Balance Config storage. Built [startingBalanceStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/startingBalanceStorage.ts) saving baseline cash values and start dates to AsyncStorage, and wired it to reset cascade operations in [demoSeeder.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/demoSeeder.ts).
+- Upgraded the tab bar switches in [ChartScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ChartScreen.tsx) to support toggling between historical Breakdown, Weekly, Trends, and the new Forward-Looking Forecast.
+
 ## [0.31.0] - 2026-07-18
 ### Added
 - Category Budget Goal Quick-Edit. Refactored [MonthlyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/MonthlyChart.tsx) to turn the spending category row gauges into interactive touch triggers displaying a "Tap to set monthly budget goal" helper.

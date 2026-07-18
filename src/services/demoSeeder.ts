@@ -148,5 +148,7 @@ export async function clearAllData(): Promise<void> {
     RECURRING_STORAGE_KEY,
     BUDGETS_STORAGE_KEY,
     '@expense_tracker/demo_seeded',
+    '@expense_tracker/starting_balance',
+    '@expense_tracker/starting_balance_date',
   ]);
 }

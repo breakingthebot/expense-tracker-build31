@@ -36,13 +36,15 @@ export function forecastBalance(
   expenses: Expense[],
   recurringSchedules: RecurringExpense[],
   targetDate: string,
-  todayStr: string = todayIsoDate()
+  todayStr: string = todayIsoDate(),
+  startingBalanceCents: number = 0,
+  startingDate: string = ''
 ): ForecastResult {
-  // 1. Calculate current balance (sum of all logged transactions up to todayStr)
-  let currentBalanceCents = 0;
+  // 1. Calculate current balance (sum of logged transactions up to todayStr, starting from startingBalanceCents)
+  let currentBalanceCents = startingBalanceCents;
   expenses.forEach((item) => {
     const itemType = item.type ?? 'expense';
-    if (item.date <= todayStr) {
+    if (item.date <= todayStr && (startingDate === '' || item.date >= startingDate)) {
       if (itemType === 'income') {
         currentBalanceCents += item.amountCents;
       } else {
@@ -54,9 +56,9 @@ export function forecastBalance(
   let projectedBalanceCents = currentBalanceCents;
   const forecastItems: ForecastItem[] = [];
 
-  // 2. Add manual future transactions (transactions logged after todayStr and <= targetDate)
+  // 2. Add manual future transactions (transactions logged after todayStr, <= targetDate, and >= startingDate)
   expenses.forEach((item) => {
-    if (item.date > todayStr && item.date <= targetDate) {
+    if (item.date > todayStr && item.date <= targetDate && (startingDate === '' || item.date >= startingDate)) {
       const itemType = item.type ?? 'expense';
       if (itemType === 'income') {
         projectedBalanceCents += item.amountCents;
@@ -76,7 +78,7 @@ export function forecastBalance(
     }
   });
 
-  // 3. Project recurring instances that fall in the future window (todayStr < date <= targetDate)
+  // 3. Project recurring instances that fall in the future window (todayStr < date <= targetDate, and >= startingDate)
   recurringSchedules.forEach((schedule) => {
     const scheduleType = schedule.type ?? 'expense';
     const dates = getRecurringInstanceDates(
@@ -87,8 +89,8 @@ export function forecastBalance(
     );
 
     dates.forEach((date, index) => {
-      // Only project instances that are strictly in the future (after todayStr)
-      if (date > todayStr && date <= targetDate) {
+      // Only project instances that are strictly in the future (after todayStr) and >= startingDate
+      if (date > todayStr && date <= targetDate && (startingDate === '' || date >= startingDate)) {
         if (scheduleType === 'income') {
           projectedBalanceCents += schedule.amountCents;
         } else {
