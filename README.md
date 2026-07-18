@@ -219,6 +219,11 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/WeeklyChart.tsx` compares each week's cumulative totals against the spending threshold limit, shifting bar colors dynamically to warning red and rendering overspent badges.
 - `src/screens/ChartScreen.tsx` renders the Weekly Spending Goal edit modal.
 
+### Category Budget Goal Push Notifications (Iteration 34)
+- `src/components/ToastProvider.tsx` sets up universal push alerts triggering browser push notification APIs and custom overlay banners.
+- `src/services/budgetAlert.ts` computes category aggregate crossings dynamically.
+- `src/hooks/useExpenses.ts` connects adding/modifying transactions with crossing alerts.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

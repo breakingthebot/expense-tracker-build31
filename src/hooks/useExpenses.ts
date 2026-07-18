@@ -34,6 +34,9 @@ import { todayIsoDate } from '../utils/date';
 import { seedDemoData, clearAllData } from '../services/demoSeeder';
 import { getStartingBalanceConfig, setStartingBalanceConfig } from '../services/startingBalanceStorage';
 import { getWeeklySpendingGoal, setWeeklySpendingGoal as setWeeklySpendingGoalConfig } from '../services/weeklyGoalStorage';
+import { useToast } from '../components/ToastProvider';
+import { formatCents } from '../utils/currency';
+import { isBudgetExceeded } from '../services/budgetAlert';
 import { logger } from '../utils/logger';
 
 const SCOPE = 'useExpenses';
@@ -83,6 +86,7 @@ interface UseExpensesResult {
 }
 
 export function useExpenses(): UseExpensesResult {
+  const { showToast } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [recurringSchedules, setRecurringSchedules] = useState<RecurringExpense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -162,11 +166,34 @@ export function useExpenses(): UseExpensesResult {
     }, [refresh])
   );
 
+  const checkBudgetExceeded = useCallback((
+    category: string,
+    amountCents: number,
+    dateStr: string,
+    excludeId?: string
+  ): { crossed: boolean; oldSpent: number; newSpent: number; limit: number } => {
+    const limit = budgetGoals[category] ?? 0;
+    return isBudgetExceeded(expenses, category, amountCents, dateStr, limit, excludeId);
+  }, [expenses, budgetGoals]);
+
   async function addNewExpense(input: NewExpenseInput) {
     setSubmitting(true);
     try {
+      const type = input.type ?? 'expense';
+      let check = { crossed: false, oldSpent: 0, newSpent: 0, limit: 0 };
+      if (type === 'expense') {
+        check = checkBudgetExceeded(input.category, input.amountCents, input.date);
+      }
+
       await addExpense(input);
       await refresh();
+
+      if (check.crossed) {
+        showToast(
+          'Budget Alert',
+          `Spent ${formatCents(check.newSpent)} of your ${formatCents(check.limit)} budget for ${input.category}.`
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -175,8 +202,21 @@ export function useExpenses(): UseExpensesResult {
   async function editExpense(id: string, input: NewExpenseInput) {
     setSubmitting(true);
     try {
+      const type = input.type ?? 'expense';
+      let check = { crossed: false, oldSpent: 0, newSpent: 0, limit: 0 };
+      if (type === 'expense') {
+        check = checkBudgetExceeded(input.category, input.amountCents, input.date, id);
+      }
+
       await updateExpense(id, input);
       await refresh();
+
+      if (check.crossed) {
+        showToast(
+          'Budget Alert',
+          `Spent ${formatCents(check.newSpent)} of your ${formatCents(check.limit)} budget for ${input.category}.`
+        );
+      }
     } finally {
       setSubmitting(false);
     }

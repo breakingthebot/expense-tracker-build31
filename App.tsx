@@ -12,6 +12,7 @@ import ChartScreen from './src/screens/ChartScreen';
 import AddScreen from './src/screens/AddScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import { ThemeProvider, useTheme } from './src/components/ThemeProvider';
+import { ToastProvider } from './src/components/ToastProvider';
 
 const Tab = createBottomTabNavigator();
 
@@ -41,9 +42,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <NavigationContainer>
-          <AppNavigator />
-        </NavigationContainer>
+        <ToastProvider>
+          <NavigationContainer>
+            <AppNavigator />
+          </NavigationContainer>
+        </ToastProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

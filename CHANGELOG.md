@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.34.0] - 2026-07-18
+### Added
+- Category Budget Goal Overspent Push Notifications. Built a premium universal [ToastProvider.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ToastProvider.tsx) rendering slide-down glassmorphic alerts and dispatching OS-native browser push alerts when permission is granted.
+- Created [budgetAlert.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/budgetAlert.ts) to evaluate spent category aggregates, triggering warnings strictly on limit crossings, and wrote test coverages inside [budgetAlert.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/budgetAlert.test.ts).
+- Integrated toast warning checks inside the expense mutation methods in [useExpenses.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/hooks/useExpenses.ts).
+
 ## [0.33.0] - 2026-07-18
 ### Added
 - Weekly Spending Goal Threshold Alerts. Created [weeklyGoalStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/weeklyGoalStorage.ts) to manage weekly aggregate spending caps, and updated [WeeklyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/WeeklyChart.tsx) to feature visual threshold line overlays, red highlight warnings when a week exceeds the limit, and direct edit banners.
