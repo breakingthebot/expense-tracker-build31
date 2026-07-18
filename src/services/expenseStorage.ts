@@ -9,6 +9,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Expense, NewExpenseInput, validateNewExpense } from '../models/expense';
 import { logger } from '../utils/logger';
+import { generateId } from '../utils/id';
 
 const STORAGE_KEY = '@expense_tracker/expenses';
 const SCOPE = 'expenseStorage';
@@ -34,10 +35,7 @@ async function writeAll(expenses: Expense[]): Promise<void> {
   }
 }
 
-/** Generates a locally-unique id. No network/device identifiers involved. */
-function generateId(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
+
 
 /** Returns all expenses, most recent date first. */
 export async function getAllExpenses(): Promise<Expense[]> {

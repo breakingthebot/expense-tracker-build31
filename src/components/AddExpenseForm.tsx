@@ -1,23 +1,31 @@
 // src/components/AddExpenseForm.tsx
 // Form for entering a new expense, or editing an existing one when
-// `editingExpense` is passed in. Validates input locally before calling
-// onSubmit so the user sees errors immediately, without a round trip to
-// storage. The parent should remount this component (e.g. via a `key` tied
-// to the expense id) when switching which expense is being edited, so field
-// state re-seeds correctly.
-// Connects to: src/config/categories.ts, src/utils/currency.ts, src/utils/date.ts, src/screens/AddScreen.tsx
+// `editingExpense` is passed in. Includes a "Repeat this expense" checkbox
+// for quick-add schedules (disabled in edit mode). Validates input locally.
+// Connects to: src/config/categories.ts, src/utils/currency.ts, src/utils/date.ts,
+// src/models/recurring.ts, src/screens/AddScreen.tsx
 // Created: 2026-07-12
 
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DatePicker from './DatePicker';
 import { EXPENSE_CATEGORIES, ExpenseCategory } from '../config/categories';
-import { Expense, NewExpenseInput } from '../models/expense';
+import { Expense } from '../models/expense';
+import { RecurringInterval } from '../models/recurring';
 import { centsToInputString, parseDollarsToCents } from '../utils/currency';
 import { todayIsoDate } from '../utils/date';
 
+export interface AddFormSubmitData {
+  amountCents: number;
+  category: ExpenseCategory;
+  note: string;
+  date: string;
+  isRecurring: boolean;
+  interval?: RecurringInterval;
+}
+
 interface AddExpenseFormProps {
-  onSubmit: (input: NewExpenseInput) => Promise<void>;
+  onSubmit: (data: AddFormSubmitData) => Promise<void>;
   submitting: boolean;
   /** When set, the form edits this expense instead of creating a new one. */
   editingExpense?: Expense;
@@ -41,6 +49,8 @@ export default function AddExpenseForm({
   );
   const [note, setNote] = useState(editingExpense?.note ?? '');
   const [date, setDate] = useState(editingExpense?.date ?? todayIsoDate());
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [interval, setInterval] = useState<RecurringInterval>('monthly');
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit() {
@@ -50,12 +60,26 @@ export default function AddExpenseForm({
       return;
     }
 
+    if (isRecurring && !note.trim()) {
+      setError('Note is required for recurring bills.');
+      return;
+    }
+
     setError(null);
     try {
-      await onSubmit({ amountCents, category, note, date });
+      await onSubmit({
+        amountCents,
+        category,
+        note,
+        date,
+        isRecurring: !isEditing && isRecurring,
+        interval: !isEditing && isRecurring ? interval : undefined,
+      });
+
       if (!isEditing) {
         setAmountText('');
         setNote('');
+        setIsRecurring(false);
       }
     } catch (submitError) {
       const fallback = isEditing ? 'Could not save changes.' : 'Could not add expense.';
@@ -97,14 +121,57 @@ export default function AddExpenseForm({
       <Text style={styles.label}>Date</Text>
       <DatePicker date={date} onDateChange={setDate} />
 
-      <Text style={styles.label}>Note (optional)</Text>
+      <Text style={styles.label}>Note {isRecurring ? '' : '(optional)'}</Text>
       <TextInput
         style={styles.input}
         value={note}
         onChangeText={setNote}
-        placeholder="What was this for?"
+        placeholder={isRecurring ? "e.g. Netflix Subscription" : "What was this for?"}
         accessibilityLabel="Expense note"
       />
+
+      {/* Recurring options (hidden in edit mode) */}
+      {!isEditing && (
+        <View style={styles.recurringSection}>
+          <TouchableOpacity
+            style={styles.checkboxRow}
+            onPress={() => setIsRecurring(!isRecurring)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isRecurring }}
+          >
+            <View style={[styles.checkbox, isRecurring && styles.checkboxChecked]}>
+              {isRecurring && <Text style={styles.checkboxTick}>✓</Text>}
+            </View>
+            <Text style={styles.checkboxLabel}>Repeat this expense</Text>
+          </TouchableOpacity>
+
+          {isRecurring && (
+            <View style={styles.intervalRow}>
+              <Text style={styles.intervalLabel}>Frequency:</Text>
+              <View style={styles.frequencyButtons}>
+                {(['daily', 'weekly', 'monthly', 'yearly'] as RecurringInterval[]).map((f) => (
+                  <TouchableOpacity
+                    key={f}
+                    style={[styles.frequencyButton, interval === f && styles.frequencyButtonActive]}
+                    onPress={() => setInterval(f)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: interval === f }}
+                  >
+                    <Text
+                      style={[
+                        styles.frequencyButtonText,
+                        interval === f && styles.frequencyButtonTextActive,
+                      ]}
+                    >
+                      {f.charAt(0).toUpperCase() + f.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+      )}
 
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -116,7 +183,15 @@ export default function AddExpenseForm({
           accessibilityRole="button"
         >
           <Text style={styles.submitButtonText}>
-            {submitting ? (isEditing ? 'Saving…' : 'Adding…') : isEditing ? 'Save Changes' : 'Add Expense'}
+            {submitting
+              ? isEditing
+                ? 'Saving…'
+                : 'Adding…'
+              : isEditing
+              ? 'Save Changes'
+              : isRecurring
+              ? 'Schedule Bill'
+              : 'Add Expense'}
           </Text>
         </TouchableOpacity>
 
@@ -159,44 +234,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
+    color: '#0b0b0b',
+    backgroundColor: '#fff',
+    marginBottom: 8,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 8,
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 16,
-    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#fff',
   },
   chipSelected: {
+    borderColor: '#2f6feb',
     backgroundColor: '#2f6feb',
   },
   chipText: {
     fontSize: 13,
-    color: '#333',
+    color: '#52514e',
   },
   chipTextSelected: {
     color: '#fff',
     fontWeight: '600',
-  },
-  iosDatePicker: {
-    alignSelf: 'flex-start',
-  },
-  dateButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    alignSelf: 'flex-start',
-    minWidth: 140,
-  },
-  dateButtonText: {
-    fontSize: 16,
-    color: '#0b0b0b',
   },
   error: {
     color: '#c0392b',
@@ -235,5 +301,77 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '600',
     fontSize: 16,
+  },
+  recurringSection: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+    marginBottom: 8,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#888',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  checkboxChecked: {
+    borderColor: '#2f6feb',
+    backgroundColor: '#2f6feb',
+  },
+  checkboxTick: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  intervalRow: {
+    marginTop: 12,
+  },
+  intervalLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 6,
+  },
+  frequencyButtons: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  frequencyButton: {
+    flex: 1,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  frequencyButtonActive: {
+    borderColor: '#2f6feb',
+    backgroundColor: '#ebf3ff',
+  },
+  frequencyButtonText: {
+    fontSize: 11,
+    color: '#555',
+    fontWeight: '500',
+  },
+  frequencyButtonTextActive: {
+    color: '#2f6feb',
+    fontWeight: '600',
   },
 });
