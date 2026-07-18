@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.11.0] - 2026-07-17
+### Added
+- Rolling 3-month spending trends calculation service under [trendSummary.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/trendSummary.ts).
+- Category trend card list [TrendChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/TrendChart.tsx) rendering 3-month vertical column sparklines, monthly breakdowns, and color-coded percentage indicators (+/- %).
+- 2 new unit tests for the trend calculation service (54 total).
+
+### Changed
+- [ChartScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ChartScreen.tsx) updated with a custom view selector (`Breakdown` / `Trends`) and a unified, fixed month-navigation header.
+- [MonthlyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/MonthlyChart.tsx) simplified to remove its local navigation headers and arrows.
+
 ## [0.10.0] - 2026-07-17
 ### Added
 - Sticky search and filter tools on [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx):

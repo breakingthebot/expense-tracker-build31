@@ -103,6 +103,12 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/ExpenseList.tsx` was updated to accept `isFiltered`. If filters return zero results, it displays `"No matching expenses found."` rather than the default empty state.
 - Export triggers in `HistoryScreen.tsx` pass `filteredExpenses` to the CSV generator, allowing users to export custom filtered subsets.
 
+### 3-Month Trend Chart (Iteration 11)
+- `src/services/trendSummary.ts` aggregates historical expenses over a rolling 3-month window ending in the selected month key, computing category-specific monthly totals, latest-month spending, and the percentage change compared to the prior month.
+- `src/components/TrendChart.tsx` renders a visual category list where each category has a 3-month vertical column sparkline scaled relative to the global maximum spent in the period (descending opacities represent temporal distance), short history labels, and color-coded percentage change indicators (green decrease, red increase, grey neutral, blue new).
+- `src/screens/ChartScreen.tsx` was refactored: pulled the month navigation arrows to the screen level (fixed at the top), added a custom segmented control toggle, and conditionally renders `MonthlyChart` or `TrendChart`.
+- `src/components/MonthlyChart.tsx` was simplified to remove its internal month navigation block.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no
