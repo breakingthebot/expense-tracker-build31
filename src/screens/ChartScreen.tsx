@@ -18,12 +18,24 @@ import { getTrendSummary } from '../services/trendSummary';
 import { formatMonthLabel, shiftMonthKey } from '../utils/date';
 
 export default function ChartScreen() {
-  const { expenses, loading, loadError } = useExpenses();
+  const { expenses, categories, loading, loadError } = useExpenses();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
   const [viewMode, setViewMode] = useState<'monthly' | 'trend'>('monthly');
 
+  // Compute a list of category names for monthly summary matching
+  const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
+
   const summary = useMemo(() => summarizeMonth(expenses, monthKey), [expenses, monthKey]);
   const trendSummary = useMemo(() => getTrendSummary(expenses, monthKey), [expenses, monthKey]);
+
+  // Construct a dynamic lookup map of category names to hex color codes
+  const categoryColors = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.forEach((cat) => {
+      map[cat.name] = cat.color;
+    });
+    return map;
+  }, [categories]);
 
   const canGoToNextMonth = monthKey !== currentMonthKey();
 
@@ -91,9 +103,13 @@ export default function ChartScreen() {
 
           {/* Conditional Content Rendering */}
           {viewMode === 'monthly' ? (
-            <MonthlyChart summary={summary} />
+            <MonthlyChart summary={summary} categoryColors={categoryColors} />
           ) : (
-            <TrendChart trends={trendSummary} latestMonthLabel={formatMonthLabel(monthKey)} />
+            <TrendChart
+              trends={trendSummary}
+              latestMonthLabel={formatMonthLabel(monthKey)}
+              categoryColors={categoryColors}
+            />
           )}
         </>
       )}

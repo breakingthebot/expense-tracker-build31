@@ -32,9 +32,8 @@ describe('validateNewExpense', () => {
     expect(errors).toContain('Amount must be greater than $0.00.');
   });
 
-  it('rejects an unknown category', () => {
-    // @ts-expect-error deliberately invalid category for the test
-    const errors = validateNewExpense({ ...validInput, category: 'NotACategory' });
+  it('rejects an empty category', () => {
+    const errors = validateNewExpense({ ...validInput, category: '' });
     expect(errors).toContain('Please choose a valid category.');
   });
 
@@ -51,8 +50,7 @@ describe('validateNewExpense', () => {
   it('collects multiple errors at once', () => {
     const errors = validateNewExpense({
       amountCents: 0,
-      // @ts-expect-error deliberately invalid category for the test
-      category: 'Nope',
+      category: '',
       note: '',
       date: 'not-a-date',
     });

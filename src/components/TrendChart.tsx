@@ -1,27 +1,28 @@
 // src/components/TrendChart.tsx
 // Renders a list of category cards showing rolling 3-month spending trends.
+// Colors are dynamically resolved via the categoryColors lookup prop.
 // Each card displays:
 // 1. The category name and latest month total.
 // 2. A 3-month vertical spark-column viz scaled relative to the global max spending.
 // 3. A localized text history breakdown of the last 3 months.
 // 4. A colored trend badge (green decrease indicator, red increase indicator).
-// Connects to: src/services/trendSummary.ts, src/config/categoryColors.ts, src/utils/currency.ts
+// Connects to: src/services/trendSummary.ts, src/utils/currency.ts
 // Created: 2026-07-17
 
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { CATEGORY_CHART_COLORS } from '../config/categoryColors';
 import { CategoryTrend } from '../services/trendSummary';
 import { formatCents } from '../utils/currency';
 
 interface TrendChartProps {
   trends: CategoryTrend[];
   latestMonthLabel: string;
+  categoryColors: Record<string, string>;
 }
 
 const BAR_MAX_HEIGHT = 35;
 const MIN_BAR_HEIGHT = 2;
 
-export default function TrendChart({ trends, latestMonthLabel }: TrendChartProps) {
+export default function TrendChart({ trends, latestMonthLabel, categoryColors }: TrendChartProps) {
   if (trends.length === 0) {
     return (
       <View style={styles.emptyState}>
@@ -42,7 +43,7 @@ export default function TrendChart({ trends, latestMonthLabel }: TrendChartProps
       <Text style={styles.subtitle}>Ending in {latestMonthLabel}</Text>
 
       {trends.map((item) => {
-        const categoryColor = CATEGORY_CHART_COLORS[item.category] || '#999';
+        const categoryColor = categoryColors[item.category] || '#999';
         const change = item.percentageChange;
 
         // Render trend badge details
@@ -93,7 +94,7 @@ export default function TrendChart({ trends, latestMonthLabel }: TrendChartProps
               <View style={styles.sparkContainer}>
                 {item.months.map((m, idx) => {
                   const barHeight = Math.max(MIN_BAR_HEIGHT, (m.amountCents / globalMax) * BAR_MAX_HEIGHT);
-                  // Opacity: Month 1 = 0.3, Month 2 = 0.6, Month 3 = 1.0
+                  // Opacity: Month 1 = 0.35, Month 2 = 0.65, Month 3 = 1.0
                   const barOpacity = idx === 0 ? 0.35 : idx === 1 ? 0.65 : 1.0;
 
                   return (

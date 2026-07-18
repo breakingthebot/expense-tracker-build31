@@ -1,16 +1,17 @@
 // src/hooks/useExpenses.ts
-// Shared data hook for the Add, History, and Chart screens. Loads expenses and
-// active recurring schedules on focus, executes the recurring expense generator
-// to catch up on any due items, and exposes CRUD operations for both single
-// transactions and recurring schedules.
+// Shared data hook for the Add, History, and Chart screens. Loads expenses,
+// active recurring schedules, and custom categories on focus. Executes the
+// recurring expense generator to catch up on any due items, and exposes CRUD
+// operations for transactions, schedules, and categories.
 // Connects to: src/services/expenseStorage.ts, src/services/recurringStorage.ts,
-// src/services/recurringGenerator.ts, src/utils/date.ts
+// src/services/recurringGenerator.ts, src/services/categoryStorage.ts, src/utils/date.ts
 // Created: 2026-07-12
 
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Expense, NewExpenseInput } from '../models/expense';
 import { NewRecurringInput, RecurringExpense } from '../models/recurring';
+import { Category } from '../services/categoryStorage';
 import {
   addExpense,
   deleteExpense,
@@ -23,6 +24,12 @@ import {
   getRecurringExpenses,
   saveSchedulesAndExpenses,
 } from '../services/recurringStorage';
+import {
+  getCategories,
+  addCategory,
+  renameCategory,
+  deleteCategory,
+} from '../services/categoryStorage';
 import { generateExpensesFromSchedules } from '../services/recurringGenerator';
 import { todayIsoDate } from '../utils/date';
 import { logger } from '../utils/logger';
@@ -32,6 +39,7 @@ const SCOPE = 'useExpenses';
 interface UseExpensesResult {
   expenses: Expense[];
   recurringSchedules: RecurringExpense[];
+  categories: Category[];
   loading: boolean;
   loadError: string | null;
   submitting: boolean;
@@ -40,11 +48,15 @@ interface UseExpensesResult {
   removeExpense: (id: string) => Promise<void>;
   addNewRecurringExpense: (input: NewRecurringInput) => Promise<void>;
   removeRecurringExpense: (id: string) => Promise<void>;
+  addNewCategory: (name: string, color: string) => Promise<void>;
+  editCategoryName: (id: string, newName: string) => Promise<void>;
+  removeCategory: (id: string) => Promise<void>;
 }
 
 export function useExpenses(): UseExpensesResult {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [recurringSchedules, setRecurringSchedules] = useState<RecurringExpense[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -53,10 +65,14 @@ export function useExpenses(): UseExpensesResult {
     setLoading(true);
     setLoadError(null);
     try {
-      // 1. Fetch active recurring schedules
+      // 1. Fetch custom/default categories list
+      const storedCategories = await getCategories();
+      setCategories(storedCategories);
+
+      // 2. Fetch active recurring schedules
       const schedules = await getRecurringExpenses();
 
-      // 2. Check and generate any due recurring transaction instances
+      // 3. Check and generate any due recurring transaction instances
       const todayStr = todayIsoDate();
       const { generatedExpenses, updatedSchedules } = generateExpensesFromSchedules(
         schedules,
@@ -64,19 +80,19 @@ export function useExpenses(): UseExpensesResult {
       );
 
       if (generatedExpenses.length > 0) {
-        // 3. Batch save new expenses and updated schedules to storage
+        // 4. Batch save new expenses and updated schedules to storage
         await saveSchedulesAndExpenses(updatedSchedules, generatedExpenses);
         setRecurringSchedules(updatedSchedules);
       } else {
         setRecurringSchedules(schedules);
       }
 
-      // 4. Fetch the full list of sorted expenses
+      // 5. Fetch the full list of sorted expenses
       const stored = await getAllExpenses();
       setExpenses(stored);
     } catch (error) {
-      logger.error(SCOPE, 'Failed to load expenses or process recurring schedules', { error: String(error) });
-      setLoadError(error instanceof Error ? error.message : 'Could not load your expenses.');
+      logger.error(SCOPE, 'Failed to load expenses, schedules, or categories', { error: String(error) });
+      setLoadError(error instanceof Error ? error.message : 'Could not load your data.');
     } finally {
       setLoading(false);
     }
@@ -128,9 +144,40 @@ export function useExpenses(): UseExpensesResult {
     await refresh();
   }
 
+  async function addNewCategory(name: string, color: string) {
+    setSubmitting(true);
+    try {
+      await addCategory(name, color);
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function editCategoryName(id: string, newName: string) {
+    setSubmitting(true);
+    try {
+      await renameCategory(id, newName);
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function removeCategory(id: string) {
+    setSubmitting(true);
+    try {
+      await deleteCategory(id);
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return {
     expenses,
     recurringSchedules,
+    categories,
     loading,
     loadError,
     submitting,
@@ -139,5 +186,8 @@ export function useExpenses(): UseExpensesResult {
     removeExpense,
     addNewRecurringExpense,
     removeRecurringExpense,
+    addNewCategory,
+    editCategoryName,
+    removeCategory,
   };
 }

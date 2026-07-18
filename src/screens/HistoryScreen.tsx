@@ -19,7 +19,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import ExpenseList from '../components/ExpenseList';
 import ScreenStatus from '../components/ScreenStatus';
-import { EXPENSE_CATEGORIES, ExpenseCategory } from '../config/categories';
+import { ExpenseCategory } from '../config/categories';
 import { useExpenses } from '../hooks/useExpenses';
 import { Expense } from '../models/expense';
 import { exportExpensesToCsv } from '../services/expenseExport';
@@ -29,7 +29,7 @@ const SCOPE = 'HistoryScreen';
 
 export default function HistoryScreen() {
   const navigation = useNavigation<any>();
-  const { expenses, loading, loadError, removeExpense } = useExpenses();
+  const { expenses, loading, loadError, removeExpense, categories } = useExpenses();
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | null>(null);
@@ -129,18 +129,18 @@ export default function HistoryScreen() {
               All
             </Text>
           </TouchableOpacity>
-          {EXPENSE_CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat;
+          {categories.map((cat) => {
+            const isSelected = selectedCategory === cat.name;
             return (
               <TouchableOpacity
-                key={cat}
-                onPress={() => setSelectedCategory(cat)}
+                key={cat.id}
+                onPress={() => setSelectedCategory(cat.name)}
                 style={[styles.filterChip, isSelected && styles.filterChipSelected]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
               >
                 <Text style={[styles.filterChipText, isSelected && styles.filterChipTextSelected]}>
-                  {cat}
+                  {cat.name}
                 </Text>
               </TouchableOpacity>
             );

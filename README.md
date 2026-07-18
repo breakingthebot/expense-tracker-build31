@@ -115,6 +115,18 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - Created platform-specific split date pickers: [DatePicker.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.tsx) for iOS/Android native `@react-native-community/datetimepicker` integrations, and [DatePicker.web.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.web.tsx) using the standard HTML5 `<input type="date">` for web compatibility.
 - Integrated the Vercel builder using `vercel.json` and a package `"build"` script executing `expo export --platform web` to publish to the `dist/` directory automatically.
 
+### Recurring Expenses (Iteration 13)
+- `src/models/recurring.ts` defines scheduling intervals (`'daily' | 'weekly' | 'monthly' | 'yearly'`) and parameter sets.
+- `src/services/recurringGenerator.ts` handles calculation of billing cycles, month-end caps, leap year calculations, and transaction templates.
+- `src/services/recurringStorage.ts` supports templates CRUD and processes generated transactions via atomic batch multi-set updates.
+- `src/hooks/useExpenses.ts` refreshes the database on focus, triggering the generator to capture outstanding scheduled items.
+- `src/components/AddExpenseForm.tsx` embeds repeat options, and [AddScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/AddScreen.tsx) displays the list of scheduled bills with cancellation controls.
+
+### Dynamic Category Lists (Iteration 14)
+- `src/services/categoryStorage.ts` seeds the default 8 categories, and supports add/rename/delete actions. It performs cascading updates to modify database category names inside expenses and templates on rename, or defaults them to `'Other'` on delete.
+- `src/screens/AddScreen.tsx` incorporates a modal allowing the user to configure categories inline, choosing from a premium 12-color swatch palette with double-tap delete confirmations.
+- Components read categories dynamically, decoupling color maps from static files to render views seamlessly.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

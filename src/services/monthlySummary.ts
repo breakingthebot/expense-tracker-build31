@@ -5,7 +5,7 @@
 // Connects to: src/models/expense.ts, src/config/categories.ts, src/components/MonthlyChart.tsx, App.tsx
 // Created: 2026-07-12
 
-import { EXPENSE_CATEGORIES, ExpenseCategory } from '../config/categories';
+import { ExpenseCategory } from '../config/categories';
 import { Expense } from '../models/expense';
 
 export interface CategoryTotal {
@@ -46,10 +46,11 @@ export function summarizeMonth(expenses: Expense[], monthKey: string): MonthlySu
     );
   }
 
-  const categoryTotals = EXPENSE_CATEGORIES.map((category) => ({
-    category,
-    totalCents: totalsByCategory.get(category) ?? 0,
-  }))
+  const categoryTotals = Array.from(totalsByCategory.entries())
+    .map(([category, totalCents]) => ({
+      category,
+      totalCents,
+    }))
     .filter((entry) => entry.totalCents > 0)
     .sort((a, b) => b.totalCents - a.totalCents);
 

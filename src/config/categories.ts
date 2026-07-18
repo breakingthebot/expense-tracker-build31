@@ -1,7 +1,10 @@
 // src/config/categories.ts
-// Fixed list of expense categories offered in the Add Expense form.
-// Connects to: src/models/expense.ts, src/components/AddExpenseForm.tsx
+// Config definitions for expense categories.
+// Re-defined to support dynamic category lists while maintaining
+// backwards-compatible fallback structures.
 // Created: 2026-07-12
+
+export type ExpenseCategory = string;
 
 export const EXPENSE_CATEGORIES = [
   'Food',
@@ -12,6 +15,4 @@ export const EXPENSE_CATEGORIES = [
   'Health',
   'Shopping',
   'Other',
-] as const;
-
-export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+];

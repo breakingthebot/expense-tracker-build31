@@ -3,6 +3,29 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.14.0] - 2026-07-18
+### Added
+- Dynamic category creation and management. Created [categoryStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/categoryStorage.ts) to seed 8 default categories, validate additions, handle inline renaming, and perform cascading updates on rename and delete events.
+- Inline category editing modal inside [AddScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/AddScreen.tsx) with double-tap delete confirmations and a custom 12-color swatch picker.
+- Exposed CRUD triggers in `useExpenses` hook and loaded them on focus.
+- 5 new unit tests under [categoryStorage.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/categoryStorage.test.ts) (64 tests total).
+
+### Changed
+- Refactored [categories.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/config/categories.ts) to support dynamic type definitions.
+- Refactored [expense.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/models/expense.ts) validation checks to verify non-empty string categories instead of static arrays.
+- Refactored [AddExpenseForm.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/AddExpenseForm.tsx) and [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx) to read dynamic categories.
+- Decoupled [MonthlyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/MonthlyChart.tsx) and [TrendChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/TrendChart.tsx) from static color config files, passing colors dynamically from [ChartScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ChartScreen.tsx) based on user configuration.
+
+## [0.13.0] - 2026-07-18
+### Added
+- Automatic recurring expenses generation. Created [recurring.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/models/recurring.ts) schemas, [recurringGenerator.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/recurringGenerator.ts) billing calculators (handling daily, weekly, monthly, yearly cycles, month-end capping, and leap years), and [recurringStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/recurringStorage.ts) for Async Storage multiSet transactions.
+- Repeat toggles inside [AddExpenseForm.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/AddExpenseForm.tsx) and scheduled billing managers scrollably placed on [AddScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/AddScreen.tsx).
+- De-duplicated local ID generations in [id.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/utils/id.ts).
+- 5 new tests in [recurringGenerator.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/recurringGenerator.test.ts) (59 tests total).
+
+### Changed
+- Integrated recurring expense check triggers inside [useExpenses.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/hooks/useExpenses.ts) focus refresh hooks.
+
 ## [0.12.0] - 2026-07-18
 ### Added
 - Platform-split date picking components: [DatePicker.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.tsx) (native iOS/Android datetimepicker) and [DatePicker.web.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.web.tsx) (HTML5 date input for web compatibility).

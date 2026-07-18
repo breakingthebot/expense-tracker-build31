@@ -1,16 +1,42 @@
 // src/screens/AddScreen.tsx
 // "Add" tab screen: renders the AddExpenseForm inside a ScrollView,
-// and lists active recurring expense schedules at the bottom of the page,
-// allowing users to manage or cancel subscriptions/schedules.
+// and lists active recurring expense schedules. Features a "Manage Categories"
+// button and modal allowing the user to create, rename (inline), or delete custom
+// categories using a gorgeous 12-color swatch.
 // Connects to: src/components/AddExpenseForm.tsx, src/hooks/useExpenses.ts, src/utils/currency.ts
 // Created: 2026-07-17
 
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import {
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import AddExpenseForm, { AddFormSubmitData } from '../components/AddExpenseForm';
 import { useExpenses } from '../hooks/useExpenses';
 import { TabParamList } from '../types/navigation';
 import { formatCents } from '../utils/currency';
+
+const PALETTE_COLORS = [
+  '#e34948', // Red
+  '#e87ba4', // Pink
+  '#4a3aa7', // Purple
+  '#2a78d6', // Blue
+  '#00a8cc', // Teal
+  '#1baf7a', // Green
+  '#008300', // Dark Green
+  '#eda100', // Yellow
+  '#eb6834', // Orange
+  '#3f51b5', // Indigo
+  '#795548', // Brown
+  '#607d8b', // Slate
+];
 
 export default function AddScreen() {
   const navigation = useNavigation<any>();
@@ -22,9 +48,22 @@ export default function AddScreen() {
     addNewRecurringExpense,
     recurringSchedules,
     removeRecurringExpense,
+    categories,
+    addNewCategory,
+    editCategoryName,
+    removeCategory,
   } = useExpenses();
 
   const editingExpense = route.params?.editingExpense;
+
+  // Category modal states
+  const [showCatModal, setShowCatModal] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState(PALETTE_COLORS[3]); // Default to Blue
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editingCatName, setEditingCatName] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [catError, setCatError] = useState<string | null>(null);
 
   async function handleFormSubmit(input: AddFormSubmitData) {
     if (editingExpense) {
@@ -61,6 +100,46 @@ export default function AddScreen() {
     navigation.navigate('History');
   }
 
+  async function handleCreateCategory() {
+    setCatError(null);
+    try {
+      await addNewCategory(newCatName, newCatColor);
+      setNewCatName('');
+    } catch (err) {
+      setCatError(err instanceof Error ? err.message : 'Could not add category.');
+    }
+  }
+
+  async function handleSaveRename(id: string) {
+    setCatError(null);
+    try {
+      await editCategoryName(id, editingCatName);
+      setEditingCatId(null);
+      setEditingCatName('');
+    } catch (err) {
+      setCatError(err instanceof Error ? err.message : 'Could not rename category.');
+    }
+  }
+
+  async function handleDeleteCategory(id: string) {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      // Auto-expire confirmation state after 3 seconds
+      setTimeout(() => {
+        setConfirmDeleteId((prev) => (prev === id ? null : prev));
+      }, 3000);
+      return;
+    }
+
+    setCatError(null);
+    try {
+      await removeCategory(id);
+      setConfirmDeleteId(null);
+    } catch (err) {
+      setCatError(err instanceof Error ? err.message : 'Could not delete category.');
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
@@ -68,9 +147,27 @@ export default function AddScreen() {
           key={editingExpense?.id ?? 'new'}
           onSubmit={handleFormSubmit}
           submitting={submitting}
+          categories={categories}
           editingExpense={editingExpense}
           onCancelEdit={handleCancelEdit}
         />
+
+        {/* Categories Settings Launcher (hidden in edit mode) */}
+        {!editingExpense && (
+          <View style={styles.configSection}>
+            <TouchableOpacity
+              style={styles.configButton}
+              onPress={() => {
+                setCatError(null);
+                setShowCatModal(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Manage custom categories"
+            >
+              <Text style={styles.configButtonText}>⚙️ Manage Categories</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Active recurring bill templates */}
         {!editingExpense && recurringSchedules.length > 0 && (
@@ -100,6 +197,156 @@ export default function AddScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Manage Categories Modal */}
+      <Modal
+        visible={showCatModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCatModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Manage Categories</Text>
+
+            {/* Quick Add Sub-Form */}
+            <View style={styles.modalAddCard}>
+              <Text style={styles.modalSubLabel}>Add New Category</Text>
+              <View style={styles.modalAddRow}>
+                <TextInput
+                  style={styles.modalAddInput}
+                  value={newCatName}
+                  onChangeText={setNewCatName}
+                  placeholder="e.g. Subscriptions"
+                  placeholderTextColor="#999"
+                  accessibilityLabel="New category name"
+                />
+                <TouchableOpacity
+                  style={[styles.modalAddButton, !newCatName.trim() && styles.modalAddButtonDisabled]}
+                  onPress={handleCreateCategory}
+                  disabled={!newCatName.trim()}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.modalAddButtonText}>＋ Add</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Color Swatch Picker */}
+              <View style={styles.colorSwatchRow}>
+                {PALETTE_COLORS.map((color) => {
+                  const isSelected = newCatColor === color;
+                  return (
+                    <TouchableOpacity
+                      key={color}
+                      style={[
+                        styles.colorCircle,
+                        { backgroundColor: color },
+                        isSelected && styles.colorCircleSelected,
+                      ]}
+                      onPress={() => setNewCatColor(color)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isSelected }}
+                    />
+                  );
+                })}
+              </View>
+            </View>
+
+            {catError && <Text style={styles.modalError}>{catError}</Text>}
+
+            {/* Categories Scrolling List */}
+            <ScrollView style={styles.modalList} contentContainerStyle={styles.modalListContent}>
+              {categories.map((cat) => {
+                const isEditingThis = editingCatId === cat.id;
+                const isConfirmingDelete = confirmDeleteId === cat.id;
+
+                return (
+                  <View key={cat.id} style={styles.modalListItem}>
+                    <View style={[styles.bulletCircle, { backgroundColor: cat.color }]} />
+
+                    {isEditingThis ? (
+                      <View style={styles.modalEditContainer}>
+                        <TextInput
+                          style={styles.modalEditInput}
+                          value={editingCatName}
+                          onChangeText={setEditingCatName}
+                          autoFocus
+                          accessibilityLabel="Edit category name"
+                        />
+                        <TouchableOpacity
+                          style={styles.modalSaveButton}
+                          onPress={() => handleSaveRename(cat.id)}
+                          accessibilityRole="button"
+                        >
+                          <Text style={styles.modalSaveButtonText}>✓</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.modalCancelButton}
+                          onPress={() => {
+                            setEditingCatId(null);
+                            setEditingCatName('');
+                          }}
+                          accessibilityRole="button"
+                        >
+                          <Text style={styles.modalCancelButtonText}>✕</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <>
+                        <Text style={styles.modalItemText}>{cat.name}</Text>
+                        {cat.isSystem ? (
+                          <Text style={styles.systemTag}>System</Text>
+                        ) : (
+                          <View style={styles.modalItemActions}>
+                            <TouchableOpacity
+                              style={styles.modalItemEdit}
+                              onPress={() => {
+                                setEditingCatId(cat.id);
+                                setEditingCatName(cat.name);
+                              }}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Rename category ${cat.name}`}
+                            >
+                              <Text style={styles.modalItemEditText}>✎</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={[
+                                styles.modalItemDelete,
+                                isConfirmingDelete && styles.modalItemDeleteConfirm,
+                              ]}
+                              onPress={() => handleDeleteCategory(cat.id)}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Delete category ${cat.name}`}
+                            >
+                              <Text
+                                style={[
+                                  styles.modalItemDeleteText,
+                                  isConfirmingDelete && styles.modalItemDeleteTextConfirm,
+                                ]}
+                              >
+                                {isConfirmingDelete ? 'Confirm?' : '✕'}
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                      </>
+                    )}
+                  </View>
+                );
+              })}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowCatModal(false)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.modalCloseButtonText}>Close Settings</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -111,6 +358,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+  },
+  configSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  configButton: {
+    backgroundColor: '#fafafa',
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  configButtonText: {
+    fontSize: 13,
+    color: '#555',
+    fontWeight: '600',
   },
   recurringSection: {
     padding: 16,
@@ -168,5 +434,233 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#ef4444',
     fontWeight: 'bold',
+  },
+  // Modal Styling
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#222',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalSubLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 6,
+  },
+  modalAddCard: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+    padding: 12,
+    marginBottom: 12,
+  },
+  modalAddRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  modalAddInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 14,
+    color: '#333',
+  },
+  modalAddButton: {
+    backgroundColor: '#2f6feb',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 6,
+    justifyContent: 'center',
+  },
+  modalAddButtonDisabled: {
+    opacity: 0.5,
+  },
+  modalAddButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  colorSwatchRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+    justifyContent: 'space-between',
+  },
+  colorCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  colorCircleSelected: {
+    borderWidth: 2,
+    borderColor: '#333',
+    transform: [{ scale: 1.15 }],
+  },
+  modalError: {
+    color: '#c0392b',
+    fontSize: 12,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalList: {
+    flex: 1,
+    minHeight: 180,
+  },
+  modalListContent: {
+    paddingBottom: 8,
+  },
+  modalListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f3f3',
+  },
+  bulletCircle: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: 10,
+  },
+  modalItemText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  systemTag: {
+    fontSize: 11,
+    color: '#888',
+    backgroundColor: '#eee',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  modalItemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  modalItemEdit: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    backgroundColor: '#fafafa',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalItemEditText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  modalItemDelete: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+    backgroundColor: '#fff5f5',
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalItemDeleteConfirm: {
+    backgroundColor: '#ef4444',
+    borderColor: '#ef4444',
+  },
+  modalItemDeleteText: {
+    fontSize: 11,
+    color: '#ef4444',
+    fontWeight: '600',
+  },
+  modalItemDeleteTextConfirm: {
+    color: '#fff',
+  },
+  modalEditContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  modalEditInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#2f6feb',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    fontSize: 14,
+    backgroundColor: '#fff',
+    color: '#333',
+  },
+  modalSaveButton: {
+    width: 28,
+    height: 28,
+    backgroundColor: '#1baf7a',
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalSaveButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  modalCancelButton: {
+    width: 28,
+    height: 28,
+    backgroundColor: '#666',
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 11,
+  },
+  modalCloseButton: {
+    backgroundColor: '#333',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  modalCloseButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

@@ -2,24 +2,23 @@
 // Horizontal bar chart of spending by category for one month.
 // Presentational only — ChartScreen.tsx handles month navigation at the screen level,
 // and computes the summary via monthlySummary.ts.
+// Colors are passed dynamically via the categoryColors prop.
 // Colors, bar spec, and label placement follow the project's data-viz standard:
-// fixed categorical hue per category (never color-only — every bar carries a visible
-// category + amount label), 4px rounded bar end, square baseline, labels placed
-// outside the bar so they never clip.
-// Connects to: src/services/monthlySummary.ts, src/config/categoryColors.ts, src/utils/currency.ts, src/screens/ChartScreen.tsx
+// 4px rounded bar end, square baseline, labels placed outside the bar so they never clip.
+// Connects to: src/services/monthlySummary.ts, src/utils/currency.ts, src/screens/ChartScreen.tsx
 // Created: 2026-07-12
 
 import { StyleSheet, Text, View } from 'react-native';
-import { CATEGORY_CHART_COLORS } from '../config/categoryColors';
 import { MonthlySummary } from '../services/monthlySummary';
 import { formatCents } from '../utils/currency';
 
 interface MonthlyChartProps {
   summary: MonthlySummary;
+  categoryColors: Record<string, string>;
 }
 
 /** Renders the monthly category breakdown chart, or an empty state if nothing was spent. */
-export default function MonthlyChart({ summary }: MonthlyChartProps) {
+export default function MonthlyChart({ summary, categoryColors }: MonthlyChartProps) {
   const maxCents = summary.categoryTotals[0]?.totalCents ?? 0;
 
   if (summary.categoryTotals.length === 0) {
@@ -38,6 +37,8 @@ export default function MonthlyChart({ summary }: MonthlyChartProps) {
       <View style={styles.rows}>
         {summary.categoryTotals.map((entry) => {
           const widthPercent = maxCents === 0 ? 0 : (entry.totalCents / maxCents) * 100;
+          const barColor = categoryColors[entry.category] || '#999';
+
           return (
             <View key={entry.category} style={styles.row}>
               <Text style={styles.categoryLabel} numberOfLines={1}>
@@ -49,7 +50,7 @@ export default function MonthlyChart({ summary }: MonthlyChartProps) {
                     styles.bar,
                     {
                       width: `${widthPercent}%`,
-                      backgroundColor: CATEGORY_CHART_COLORS[entry.category] || '#999',
+                      backgroundColor: barColor,
                     },
                   ]}
                 />

@@ -9,9 +9,10 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DatePicker from './DatePicker';
-import { EXPENSE_CATEGORIES, ExpenseCategory } from '../config/categories';
+import { ExpenseCategory } from '../config/categories';
 import { Expense } from '../models/expense';
 import { RecurringInterval } from '../models/recurring';
+import { Category } from '../services/categoryStorage';
 import { centsToInputString, parseDollarsToCents } from '../utils/currency';
 import { todayIsoDate } from '../utils/date';
 
@@ -27,6 +28,7 @@ export interface AddFormSubmitData {
 interface AddExpenseFormProps {
   onSubmit: (data: AddFormSubmitData) => Promise<void>;
   submitting: boolean;
+  categories: Category[];
   /** When set, the form edits this expense instead of creating a new one. */
   editingExpense?: Expense;
   /** Shown only in edit mode; lets the user back out without saving. */
@@ -37,6 +39,7 @@ interface AddExpenseFormProps {
 export default function AddExpenseForm({
   onSubmit,
   submitting,
+  categories,
   editingExpense,
   onCancelEdit,
 }: AddExpenseFormProps) {
@@ -45,7 +48,7 @@ export default function AddExpenseForm({
     editingExpense ? centsToInputString(editingExpense.amountCents) : ''
   );
   const [category, setCategory] = useState<ExpenseCategory>(
-    editingExpense?.category ?? EXPENSE_CATEGORIES[0]
+    editingExpense?.category ?? 'Other'
   );
   const [note, setNote] = useState(editingExpense?.note ?? '');
   const [date, setDate] = useState(editingExpense?.date ?? todayIsoDate());
@@ -103,16 +106,16 @@ export default function AddExpenseForm({
 
       <Text style={styles.label}>Category</Text>
       <View style={styles.chipRow}>
-        {EXPENSE_CATEGORIES.map((option) => (
+        {categories.map((option) => (
           <TouchableOpacity
-            key={option}
-            onPress={() => setCategory(option)}
-            style={[styles.chip, option === category && styles.chipSelected]}
+            key={option.id}
+            onPress={() => setCategory(option.name)}
+            style={[styles.chip, option.name === category && styles.chipSelected]}
             accessibilityRole="button"
-            accessibilityState={{ selected: option === category }}
+            accessibilityState={{ selected: option.name === category }}
           >
-            <Text style={[styles.chipText, option === category && styles.chipTextSelected]}>
-              {option}
+            <Text style={[styles.chipText, option.name === category && styles.chipTextSelected]}>
+              {option.name}
             </Text>
           </TouchableOpacity>
         ))}

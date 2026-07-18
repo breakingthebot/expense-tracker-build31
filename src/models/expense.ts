@@ -34,7 +34,7 @@ export function validateNewExpense(input: NewExpenseInput): string[] {
     errors.push('Amount must be greater than $0.00.');
   }
 
-  if (!EXPENSE_CATEGORIES.includes(input.category)) {
+  if (!input.category || !input.category.trim()) {
     errors.push('Please choose a valid category.');
   }
 
