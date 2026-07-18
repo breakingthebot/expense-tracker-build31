@@ -32,6 +32,8 @@ export default function ChartScreen() {
     startingBalance,
     startingBalanceDate,
     updateStartingBalance,
+    weeklySpendingGoal,
+    updateWeeklySpendingGoal,
     updateBudgetGoal,
     loading,
     loadError,
@@ -43,6 +45,10 @@ export default function ChartScreen() {
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
   const [activeBudgetCategory, setActiveBudgetCategory] = useState<string | null>(null);
   const [budgetInputValue, setBudgetInputValue] = useState('');
+
+  // Weekly Goal Edit Modal States
+  const [weeklyGoalModalVisible, setWeeklyGoalModalVisible] = useState(false);
+  const [weeklyGoalInputValue, setWeeklyGoalInputValue] = useState('');
 
   function handleOpenBudgetEdit(category: string) {
     setActiveBudgetCategory(category);
@@ -65,6 +71,28 @@ export default function ChartScreen() {
       setBudgetModalVisible(false);
       setActiveBudgetCategory(null);
       setBudgetInputValue('');
+    } catch (err) {
+      // Handled in storage logic
+    }
+  }
+
+  function handleOpenWeeklyGoalEdit() {
+    if (weeklySpendingGoal > 0) {
+      setWeeklyGoalInputValue((weeklySpendingGoal / 100).toString());
+    } else {
+      setWeeklyGoalInputValue('');
+    }
+    setWeeklyGoalModalVisible(true);
+  }
+
+  async function handleSaveWeeklySpendingGoal() {
+    const dollars = parseFloat(weeklyGoalInputValue.trim());
+    const limitCents = isNaN(dollars) || dollars <= 0 ? 0 : Math.round(dollars * 100);
+
+    try {
+      await updateWeeklySpendingGoal(limitCents);
+      setWeeklyGoalModalVisible(false);
+      setWeeklyGoalInputValue('');
     } catch (err) {
       // Handled in storage logic
     }
@@ -223,6 +251,8 @@ export default function ChartScreen() {
             <WeeklyChart
               summary={weeklySummary}
               chartType={defaultTxType}
+              weeklyGoal={weeklySpendingGoal}
+              onWeeklyGoalPress={handleOpenWeeklyGoalEdit}
             />
           )}
           {viewMode === 'trend' && (
@@ -297,6 +327,66 @@ export default function ChartScreen() {
                 onPress={handleSaveBudgetGoal}
                 accessibilityRole="button"
                 accessibilityLabel="Save budget limit"
+              >
+                <Text style={styles.modalButtonTextSave}>Save Limit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Weekly Goal Edit Modal */}
+      <Modal
+        visible={weeklyGoalModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setWeeklyGoalModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Weekly Spending Goal</Text>
+            <Text style={styles.modalSubtitle}>
+              Set a weekly aggregate spending limit.
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.currencySymbol}>$</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="0.00"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="decimal-pad"
+                value={weeklyGoalInputValue}
+                onChangeText={setWeeklyGoalInputValue}
+                autoFocus={true}
+                accessibilityLabel="Weekly goal amount in dollars"
+              />
+            </View>
+            
+            <Text style={styles.inputHint}>
+              Enter the limit in dollars. Enter 0 or leave blank to remove the weekly spending goal.
+            </Text>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => {
+                  setWeeklyGoalModalVisible(false);
+                  setWeeklyGoalInputValue('');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel editing weekly goal"
+              >
+                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSave]}
+                onPress={handleSaveWeeklySpendingGoal}
+                accessibilityRole="button"
+                accessibilityLabel="Save weekly spending goal"
               >
                 <Text style={styles.modalButtonTextSave}>Save Limit</Text>
               </TouchableOpacity>

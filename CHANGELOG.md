@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.33.0] - 2026-07-18
+### Added
+- Weekly Spending Goal Threshold Alerts. Created [weeklyGoalStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/weeklyGoalStorage.ts) to manage weekly aggregate spending caps, and updated [WeeklyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/WeeklyChart.tsx) to feature visual threshold line overlays, red highlight warnings when a week exceeds the limit, and direct edit banners.
+- Integrated a custom Weekly Goal Edit Modal within [ChartScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ChartScreen.tsx) with numeric inputs and auto-focus fields.
+
 ## [0.32.0] - 2026-07-18
 ### Added
 - Forward-Looking Cash Flow Forecast. Created [ForecastView.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ForecastView.tsx) displaying a projected balance graph/timeline, simulated recurring schedules, and a chronological ledger of running balances up to selectable future dates.

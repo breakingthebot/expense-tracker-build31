@@ -33,6 +33,7 @@ import { validateCsvImport, ValidationResult } from '../services/csvImport';
 import { todayIsoDate } from '../utils/date';
 import { seedDemoData, clearAllData } from '../services/demoSeeder';
 import { getStartingBalanceConfig, setStartingBalanceConfig } from '../services/startingBalanceStorage';
+import { getWeeklySpendingGoal, setWeeklySpendingGoal as setWeeklySpendingGoalConfig } from '../services/weeklyGoalStorage';
 import { logger } from '../utils/logger';
 
 const SCOPE = 'useExpenses';
@@ -58,6 +59,7 @@ interface UseExpensesResult {
   defaultTxType: TransactionType;
   startingBalance: number;
   startingBalanceDate: string;
+  weeklySpendingGoal: number;
   loading: boolean;
   loadError: string | null;
   submitting: boolean;
@@ -71,6 +73,7 @@ interface UseExpensesResult {
   removeCategory: (id: string) => Promise<void>;
   updateBudgetGoal: (category: string, limitCents: number) => Promise<void>;
   updateStartingBalance: (balanceCents: number, startDate: string) => Promise<void>;
+  updateWeeklySpendingGoal: (limitCents: number) => Promise<void>;
   importTransactions: (csvContent: string) => Promise<ValidationResult>;
   setDefaultTxType: (type: TransactionType) => Promise<void>;
   reorderCategoriesList: (orderedIds: string[]) => Promise<void>;
@@ -87,6 +90,7 @@ export function useExpenses(): UseExpensesResult {
   const [defaultTxType, setDefaultTxTypeState] = useState<TransactionType>('expense');
   const [startingBalance, setStartingBalance] = useState<number>(0);
   const [startingBalanceDate, setStartingBalanceDate] = useState<string>('');
+  const [weeklySpendingGoal, setWeeklySpendingGoal] = useState<number>(0);
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -140,6 +144,10 @@ export function useExpenses(): UseExpensesResult {
       const startingBalConfig = await getStartingBalanceConfig();
       setStartingBalance(startingBalConfig.balanceCents);
       setStartingBalanceDate(startingBalConfig.startDate);
+
+      // 10. Load weekly spending goal
+      const weeklyGoalCents = await getWeeklySpendingGoal();
+      setWeeklySpendingGoal(weeklyGoalCents);
     } catch (error) {
       logger.error(SCOPE, 'Failed to load expenses, schedules, categories, or budgets', { error: String(error) });
       setLoadError(error instanceof Error ? error.message : 'Could not load your data.');
@@ -318,6 +326,16 @@ export function useExpenses(): UseExpensesResult {
     }
   }
 
+  async function updateWeeklySpendingGoal(limitCents: number) {
+    setSubmitting(true);
+    try {
+      await setWeeklySpendingGoalConfig(limitCents);
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return {
     expenses,
     recurringSchedules,
@@ -326,6 +344,7 @@ export function useExpenses(): UseExpensesResult {
     defaultTxType,
     startingBalance,
     startingBalanceDate,
+    weeklySpendingGoal,
     demoSeeded,
     loading,
     loadError,
@@ -340,6 +359,7 @@ export function useExpenses(): UseExpensesResult {
     removeCategory,
     updateBudgetGoal,
     updateStartingBalance,
+    updateWeeklySpendingGoal,
     importTransactions,
     setDefaultTxType,
     reorderCategoriesList,

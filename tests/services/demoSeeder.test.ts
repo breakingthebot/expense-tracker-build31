@@ -35,6 +35,7 @@ describe('demoSeeder', () => {
     await seedDemoData();
     await AsyncStorage.setItem('@expense_tracker/starting_balance', '1000');
     await AsyncStorage.setItem('@expense_tracker/starting_balance_date', '2026-07-01');
+    await AsyncStorage.setItem('@expense_tracker/weekly_spending_goal', '15000');
 
     await clearAllData();
 
@@ -49,5 +50,8 @@ describe('demoSeeder', () => {
 
     const bal = await AsyncStorage.getItem('@expense_tracker/starting_balance');
     expect(bal).toBeNull();
+
+    const weeklyGoal = await AsyncStorage.getItem('@expense_tracker/weekly_spending_goal');
+    expect(weeklyGoal).toBeNull();
   });
 });

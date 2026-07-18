@@ -141,7 +141,6 @@ export async function seedDemoData(): Promise<void> {
   ]);
 }
 
-/** Wipes all storage tables clean to restore a blank user database. */
 export async function clearAllData(): Promise<void> {
   await AsyncStorage.multiRemove([
     EXPENSES_STORAGE_KEY,
@@ -150,5 +149,6 @@ export async function clearAllData(): Promise<void> {
     '@expense_tracker/demo_seeded',
     '@expense_tracker/starting_balance',
     '@expense_tracker/starting_balance_date',
+    '@expense_tracker/weekly_spending_goal',
   ]);
 }

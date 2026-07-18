@@ -214,6 +214,11 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/ForecastView.tsx` displays active balance projection cards, starting baseline config form fields, target date selection, and chronologically sorted future cash transactions.
 - `src/screens/ChartScreen.tsx` connects the view switcher toggle triggers and updates local states.
 
+### Weekly Spending Goal & Alerts (Iteration 33)
+- `src/services/weeklyGoalStorage.ts` handles saving the global weekly aggregate spending limit in AsyncStorage.
+- `src/components/WeeklyChart.tsx` compares each week's cumulative totals against the spending threshold limit, shifting bar colors dynamically to warning red and rendering overspent badges.
+- `src/screens/ChartScreen.tsx` renders the Weekly Spending Goal edit modal.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

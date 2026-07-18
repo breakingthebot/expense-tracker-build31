@@ -4,7 +4,7 @@
 // src/components/ThemeProvider.tsx
 // Created: 2026-07-18
 
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MonthlyWeeklySummary } from '../services/monthlySummary';
 import { formatCents } from '../utils/currency';
 import { useTheme } from './ThemeProvider';
@@ -13,6 +13,8 @@ import { TransactionType } from '../models/expense';
 interface WeeklyChartProps {
   summary: MonthlyWeeklySummary;
   chartType?: TransactionType;
+  weeklyGoal: number; // in cents
+  onWeeklyGoalPress?: () => void;
 }
 
 const WEEK_RANGES: Record<string, string> = {
@@ -26,14 +28,35 @@ const WEEK_RANGES: Record<string, string> = {
 export default function WeeklyChart({
   summary,
   chartType = 'expense',
+  weeklyGoal,
+  onWeeklyGoalPress,
 }: WeeklyChartProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
-  const maxCents = Math.max(...summary.weeklyTotals.map((w) => w.totalCents), 0);
+  
+  const showWeeklyGoal = chartType === 'expense';
+  
+  // Max cents for scaling the bar width
+  const rawMax = Math.max(...summary.weeklyTotals.map((w) => w.totalCents), 0);
+  const maxCents = showWeeklyGoal && weeklyGoal > 0 ? Math.max(rawMax, weeklyGoal) : rawMax;
 
   if (summary.totalCents === 0) {
     return (
       <View style={styles.emptyState}>
+        {showWeeklyGoal && onWeeklyGoalPress && (
+          <TouchableOpacity
+            style={styles.goalBanner}
+            onPress={onWeeklyGoalPress}
+            accessibilityRole="button"
+            accessibilityLabel="Set or edit weekly spending goal limit"
+          >
+            <Text style={styles.goalBannerText}>
+              {weeklyGoal > 0
+                ? `Weekly Spending Limit: ${formatCents(weeklyGoal)}`
+                : 'Tap to set a weekly spending limit'}
+            </Text>
+          </TouchableOpacity>
+        )}
         <Text style={styles.emptyStateText}>
           {chartType === 'income'
             ? 'No income logged in this month.'
@@ -43,8 +66,6 @@ export default function WeeklyChart({
     );
   }
 
-  const barColor = chartType === 'income' ? colors.success : colors.primary;
-
   return (
     <View style={styles.container}>
       <Text style={styles.totalValue}>{formatCents(summary.totalCents)}</Text>
@@ -52,11 +73,31 @@ export default function WeeklyChart({
         {chartType === 'income' ? 'total income' : 'total spent'}
       </Text>
 
+      {showWeeklyGoal && onWeeklyGoalPress && (
+        <TouchableOpacity
+          style={styles.goalBanner}
+          onPress={onWeeklyGoalPress}
+          accessibilityRole="button"
+          accessibilityLabel="Set or edit weekly spending goal limit"
+        >
+          <Text style={styles.goalBannerText}>
+            {weeklyGoal > 0
+              ? `Weekly Spending Limit: ${formatCents(weeklyGoal)}`
+              : 'Tap to set a weekly spending limit'}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       <View style={styles.rows}>
         {summary.weeklyTotals.map((entry) => {
           const widthPercent = maxCents === 0 ? 0 : (entry.totalCents / maxCents) * 100;
           const percentage = summary.totalCents === 0 ? 0 : Math.round((entry.totalCents / summary.totalCents) * 100);
           const rangeLabel = WEEK_RANGES[entry.weekLabel] || '';
+          
+          const isOverGoal = showWeeklyGoal && weeklyGoal > 0 && entry.totalCents > weeklyGoal;
+          const barColor = chartType === 'income'
+            ? colors.success
+            : (isOverGoal ? colors.error : colors.primary);
 
           return (
             <View key={entry.weekLabel} style={styles.rowContainer}>
@@ -76,18 +117,32 @@ export default function WeeklyChart({
                       },
                     ]}
                   />
+                  {/* Subtle limit line indicator overlay */}
+                  {showWeeklyGoal && weeklyGoal > 0 && (
+                    <View
+                      style={[
+                        styles.limitIndicator,
+                        { left: `${(weeklyGoal / maxCents) * 100}%` }
+                      ]}
+                    />
+                  )}
                 </View>
 
                 <Text style={styles.valueLabel}>{formatCents(entry.totalCents)}</Text>
               </View>
 
-              {entry.totalCents > 0 && (
-                <View style={styles.pctRow}>
+              <View style={styles.pctRow}>
+                {entry.totalCents > 0 && (
                   <Text style={styles.pctText}>
                     {percentage}% of monthly {chartType === 'income' ? 'income' : 'spending'}
                   </Text>
-                </View>
-              )}
+                )}
+                {isOverGoal && (
+                  <Text style={styles.overGoalText}>
+                    ⚠️ Over weekly limit by {formatCents(entry.totalCents - weeklyGoal)}
+                  </Text>
+                )}
+              </View>
             </View>
           );
         })}
@@ -116,11 +171,26 @@ const createStyles = (colors: any) =>
     totalCaption: {
       fontSize: 13,
       color: colors.textSecondary,
-      marginBottom: 20,
+      marginBottom: 12,
       textAlign: 'center',
       textTransform: 'uppercase',
       letterSpacing: 1,
       fontWeight: '600',
+    },
+    goalBanner: {
+      alignSelf: 'center',
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 6,
+      marginBottom: 20,
+    },
+    goalBannerText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
     },
     rows: {
       gap: 16,
@@ -153,13 +223,20 @@ const createStyles = (colors: any) =>
       justifyContent: 'center',
       backgroundColor: colors.surfaceSecondary,
       borderRadius: 4,
-      overflow: 'hidden',
+      position: 'relative',
     },
     bar: {
       height: BAR_HEIGHT,
-      borderTopRightRadius: 4,
-      borderBottomRightRadius: 4,
+      borderRadius: 4,
       minWidth: 3,
+    },
+    limitIndicator: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      width: 1.5,
+      backgroundColor: colors.border,
+      opacity: 0.8,
     },
     valueLabel: {
       width: VALUE_WIDTH,
@@ -171,10 +248,18 @@ const createStyles = (colors: any) =>
     pctRow: {
       marginLeft: LABEL_WIDTH,
       marginTop: 4,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
     },
     pctText: {
       fontSize: 11,
       color: colors.textSecondary,
+    },
+    overGoalText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: colors.error,
     },
     emptyState: {
       paddingVertical: 48,
