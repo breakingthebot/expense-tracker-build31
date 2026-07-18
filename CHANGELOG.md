@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.20.0] - 2026-07-18
+### Added
+- Future Date Selection. Removed the calendar `maximumDate={new Date()}` boundary constraint in [DatePicker.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.tsx), enabling future forecasting and advance bill scheduling.
+
+### Fixed
+- Income Saving Mappings. Corrected database object builders `addExpense` and `updateExpense` in [expenseStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/expenseStorage.ts) to map and propagate transaction `type` parameters. This stops income items from incorrectly defaulting to expenses inside AsyncStorage.
+- Updated database storage assertions in [expenseStorage.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/expenseStorage.test.ts).
+
 ## [0.19.0] - 2026-07-18
 ### Added
 - Category Budget Goals Graph (Option 1). Refactored [MonthlyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/MonthlyChart.tsx) to render visual target progress meters scaled to each category's budget cap. Spent progress is filled, turning warning red (`colors.error`) and displaying warning banners when exceeded.

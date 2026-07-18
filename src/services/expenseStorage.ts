@@ -61,6 +61,7 @@ export async function addExpense(input: NewExpenseInput): Promise<Expense> {
     category: input.category,
     note: input.note.trim(),
     date: input.date,
+    type: input.type ?? 'expense',
     createdAt: new Date().toISOString(),
   };
 
@@ -113,6 +114,7 @@ export async function updateExpense(id: string, input: NewExpenseInput): Promise
     category: input.category,
     note: input.note.trim(),
     date: input.date,
+    type: input.type,
   };
 
   const next = [...existing];

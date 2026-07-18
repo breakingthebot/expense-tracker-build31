@@ -51,6 +51,7 @@ describe('addExpense', () => {
     expect(expense.id).toBeTruthy();
     expect(expense.createdAt).toBeTruthy();
     expect(expense.amountCents).toBe(1000);
+    expect(expense.type).toBe('expense');
 
     const all = await getAllExpenses();
     expect(all).toHaveLength(1);
@@ -78,6 +79,7 @@ describe('updateExpense', () => {
       category: 'Housing',
       note: 'Rent',
       date: '2026-07-11',
+      type: 'income',
     });
 
     expect(updated.id).toBe(original.id);
@@ -86,6 +88,7 @@ describe('updateExpense', () => {
     expect(updated.category).toBe('Housing');
     expect(updated.note).toBe('Rent');
     expect(updated.date).toBe('2026-07-11');
+    expect(updated.type).toBe('income');
 
     const all = await getAllExpenses();
     expect(all).toHaveLength(1);

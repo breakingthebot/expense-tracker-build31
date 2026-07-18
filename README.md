@@ -158,6 +158,10 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/screens/ChartScreen.tsx` maps mode selection buttons to coordinate layout display states with other navigation segments.
 - `src/services/monthlySummary.ts` and `src/services/trendSummary.ts` filter items by type parameters to aggregate both income and expense category sets.
 
+### Future Forecasting Foundations & Income Fix (Iteration 20)
+- `src/components/DatePicker.tsx` removes the `maximumDate` constraint, enabling the user to enter future dates for bills and projections.
+- `src/services/expenseStorage.ts` maps the transaction `type` parameter properly on creations and updates, ensuring income logs correctly persist as income.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

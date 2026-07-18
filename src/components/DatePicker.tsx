@@ -35,7 +35,6 @@ export default function DatePicker({ date, onDateChange }: DatePickerProps) {
         value={parseIsoDate(date)}
         mode="date"
         display="compact"
-        maximumDate={new Date()}
         onChange={handleDateChange}
         style={styles.iosDatePicker}
         themeVariant={colors.background === '#ffffff' ? 'light' : 'dark'}
@@ -59,7 +58,6 @@ export default function DatePicker({ date, onDateChange }: DatePickerProps) {
           value={parseIsoDate(date)}
           mode="date"
           display="default"
-          maximumDate={new Date()}
           onChange={handleDateChange}
         />
       )}
