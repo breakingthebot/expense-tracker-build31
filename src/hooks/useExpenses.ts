@@ -13,7 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Expense, NewExpenseInput, TransactionType } from '../models/expense';
 import { NewRecurringInput, RecurringExpense } from '../models/recurring';
-import { Category, getCategories, addCategory, renameCategory, deleteCategory } from '../services/categoryStorage';
+import { Category, getCategories, addCategory, renameCategory, deleteCategory, reorderCategories } from '../services/categoryStorage';
 import { getBudgetGoals, setBudgetGoal } from '../services/budgetStorage';
 import {
   addExpense,
@@ -68,6 +68,7 @@ interface UseExpensesResult {
   updateBudgetGoal: (category: string, limitCents: number) => Promise<void>;
   importTransactions: (csvContent: string) => Promise<ValidationResult>;
   setDefaultTxType: (type: TransactionType) => Promise<void>;
+  reorderCategoriesList: (orderedIds: string[]) => Promise<void>;
 }
 
 export function useExpenses(): UseExpensesResult {
@@ -257,6 +258,16 @@ export function useExpenses(): UseExpensesResult {
     }
   }
 
+  async function reorderCategoriesList(orderedIds: string[]) {
+    setSubmitting(true);
+    try {
+      await reorderCategories(orderedIds);
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return {
     expenses,
     recurringSchedules,
@@ -277,5 +288,6 @@ export function useExpenses(): UseExpensesResult {
     updateBudgetGoal,
     importTransactions,
     setDefaultTxType,
+    reorderCategoriesList,
   };
 }

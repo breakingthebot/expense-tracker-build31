@@ -199,3 +199,27 @@ export async function deleteCategory(id: string): Promise<void> {
 
   logger.info(SCOPE, 'Category deleted (cascading to Other)', { id, name: oldName });
 }
+
+/** Reorders categories by a list of category IDs and persists the new order. */
+export async function reorderCategories(orderedIds: string[]): Promise<Category[]> {
+  const categories = await getCategories();
+  const categoryMap = new Map(categories.map((c) => [c.id, c]));
+
+  const newOrderedCategories: Category[] = [];
+  orderedIds.forEach((id) => {
+    const c = categoryMap.get(id);
+    if (c) {
+      newOrderedCategories.push(c);
+      categoryMap.delete(id);
+    }
+  });
+
+  // Fallback: append any categories that weren't in orderedIds
+  categoryMap.forEach((c) => {
+    newOrderedCategories.push(c);
+  });
+
+  await writeAllCategories(newOrderedCategories);
+  logger.info(SCOPE, 'Categories reordered', { count: newOrderedCategories.length });
+  return newOrderedCategories;
+}

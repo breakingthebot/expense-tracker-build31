@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.23.0] - 2026-07-18
+### Added
+- Interactive Category Reordering. Added `reorderCategories` inside [categoryStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/categoryStorage.ts) allowing custom category list rankings and wrote unit tests in [categoryStorage.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/categoryStorage.test.ts).
+- Exposed `reorderCategoriesList` callback in database state hooks inside [useExpenses.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/hooks/useExpenses.ts).
+- Sleek up/down reorder arrow controls for each category item inside the Category Settings Modal on [AddScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/AddScreen.tsx). Custom sorting instantly rearranges grid layouts in chart screens and transaction entry forms.
+
 ## [0.22.0] - 2026-07-18
 ### Added
 - Date Range Presets & Filter. Added predefined date range calculations (`getThisWeekRange`, `getLast7DaysRange`, `getThisMonthRange`) in [date.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/utils/date.ts) and wrote unit tests in [date.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/utils/date.test.ts).

@@ -59,6 +59,7 @@ export default function AddScreen() {
     updateBudgetGoal,
     defaultTxType,
     setDefaultTxType,
+    reorderCategoriesList,
   } = useExpenses();
 
   const editingExpense = route.params?.editingExpense;
@@ -172,6 +173,23 @@ export default function AddScreen() {
       setEditingBudgetText('');
     } catch (err) {
       setCatError(err instanceof Error ? err.message : 'Could not save budget goal.');
+    }
+  }
+
+  async function handleMoveCategory(index: number, direction: 'up' | 'down') {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= categories.length) return;
+
+    const listCopy = [...categories];
+    const temp = listCopy[index];
+    listCopy[index] = listCopy[newIndex];
+    listCopy[newIndex] = temp;
+
+    const orderedIds = listCopy.map((c) => c.id);
+    try {
+      await reorderCategoriesList(orderedIds);
+    } catch (err) {
+      setCatError(err instanceof Error ? err.message : 'Could not reorder categories.');
     }
   }
 
@@ -294,7 +312,7 @@ export default function AddScreen() {
 
             {/* Scrollable list of existing categories */}
             <ScrollView style={styles.modalList} contentContainerStyle={styles.modalListContent}>
-              {categories.map((cat) => {
+              {categories.map((cat, index) => {
                 const isSystem = cat.id.startsWith('sys-');
                 const isEditing = editingCatId === cat.id;
                 const isConfirming = confirmDeleteId === cat.id;
@@ -305,6 +323,28 @@ export default function AddScreen() {
                 return (
                   <View key={cat.id} style={styles.modalRow}>
                     <View style={styles.modalRowLeft}>
+                      {/* Reorder controls (up/down arrows) */}
+                      <View style={styles.reorderCol}>
+                        <TouchableOpacity
+                          disabled={index === 0}
+                          onPress={() => handleMoveCategory(index, 'up')}
+                          accessibilityRole="button"
+                          accessibilityLabel="Move category up"
+                          style={[styles.reorderBtn, index === 0 && styles.reorderBtnDisabled]}
+                        >
+                          <Text style={[styles.reorderArrow, index === 0 && styles.reorderArrowDisabled]}>▲</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          disabled={index === categories.length - 1}
+                          onPress={() => handleMoveCategory(index, 'down')}
+                          accessibilityRole="button"
+                          accessibilityLabel="Move category down"
+                          style={[styles.reorderBtn, index === categories.length - 1 && styles.reorderBtnDisabled]}
+                        >
+                          <Text style={[styles.reorderArrow, index === categories.length - 1 && styles.reorderArrowDisabled]}>▼</Text>
+                        </TouchableOpacity>
+                      </View>
+
                       {/* Category color indicator */}
                       <View style={[styles.modalColorDot, { backgroundColor: cat.color }]} />
 
@@ -814,5 +854,31 @@ const createStyles = (colors: any, isDark: boolean) =>
       color: '#fff',
       fontSize: 11,
       fontWeight: 'bold',
+    },
+    reorderCol: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginRight: 8,
+    },
+    reorderBtn: {
+      padding: 4,
+      borderRadius: 4,
+      backgroundColor: colors.surfaceSecondary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 20,
+      height: 20,
+    },
+    reorderBtnDisabled: {
+      opacity: 0.3,
+    },
+    reorderArrow: {
+      fontSize: 10,
+      color: colors.text,
+      fontWeight: 'bold',
+    },
+    reorderArrowDisabled: {
+      color: colors.textMuted,
     },
   });

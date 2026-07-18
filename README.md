@@ -171,6 +171,11 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/utils/date.ts` implements predefined range calculators (`getThisWeekRange`, `getLast7DaysRange`, `getThisMonthRange`).
 - `src/screens/HistoryScreen.tsx` embeds the date range selection strip, custom DatePicker fields, and binds filters to dynamic sum banners.
 
+### Interactive Category Reordering (Iteration 23)
+- `src/services/categoryStorage.ts` implements the `reorderCategories` backend persistence layer to save custom order arrays.
+- `src/hooks/useExpenses.ts` coordinates updating active local memory and refreshing focus data grids.
+- `src/screens/AddScreen.tsx` embeds up/down shift arrows in the categories Settings list modal. Reordering automatically affects lists on Add tabs, History filters, and Charts.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

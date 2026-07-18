@@ -5,7 +5,7 @@
 // Created: 2026-07-18
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getCategories, addCategory, renameCategory, deleteCategory } from '../../src/services/categoryStorage';
+import { getCategories, addCategory, renameCategory, deleteCategory, reorderCategories } from '../../src/services/categoryStorage';
 import { Expense } from '../../src/models/expense';
 import { RecurringExpense } from '../../src/models/recurring';
 
@@ -133,5 +133,25 @@ describe('categoryStorage', () => {
 
     await expect(renameCategory(otherCat.id, 'Miscellaneous')).rejects.toThrow();
     await expect(deleteCategory(otherCat.id)).rejects.toThrow();
+  });
+
+  it('reorders categories successfully and preserves fallback logic', async () => {
+    const initial = await getCategories();
+    const id0 = initial[0].id;
+    const id1 = initial[1].id;
+    const id2 = initial[2].id;
+
+    // Order 2, 0, 1 and ignore the rest
+    const orderedList = await reorderCategories([id2, id0, id1]);
+    expect(orderedList[0].id).toBe(id2);
+    expect(orderedList[1].id).toBe(id0);
+    expect(orderedList[2].id).toBe(id1);
+
+    // Remaining items should fall back to original ordering positions
+    expect(orderedList).toHaveLength(initial.length);
+
+    // Confirm database reads return the new order
+    const parsed = await getCategories();
+    expect(parsed[0].id).toBe(id2);
   });
 });
