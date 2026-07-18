@@ -70,6 +70,25 @@ export async function addExpense(input: NewExpenseInput): Promise<Expense> {
   return expense;
 }
 
+/** Saves a batch of validated new transactions atomically in a single write. */
+export async function addExpensesBulk(inputs: NewExpenseInput[]): Promise<Expense[]> {
+  const nowStr = new Date().toISOString();
+  const newExpenses: Expense[] = inputs.map((input) => ({
+    id: generateId(),
+    amountCents: input.amountCents,
+    category: input.category,
+    note: input.note.trim(),
+    date: input.date,
+    type: input.type ?? 'expense',
+    createdAt: nowStr,
+  }));
+
+  const existing = await readAll();
+  await writeAll([...existing, ...newExpenses]);
+  logger.info(SCOPE, 'Bulk transactions added', { count: newExpenses.length });
+  return newExpenses;
+}
+
 /**
  * Validates and saves changes to an existing expense, keeping its id and
  * original createdAt. Throws a user-facing error if validation fails or the

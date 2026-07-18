@@ -3,6 +3,19 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.17.0] - 2026-07-18
+### Added
+- CSV Data Import feature. Created [csvParser.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/utils/csvParser.ts) parsing RFC 4180 strings and quote-enclosed cells.
+- Spreadsheet validation service in [csvImport.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/csvImport.ts) collecting row problems and mapping case-insensitive headers.
+- Browser file picker overlay Modal in [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx) with validation badges, preview scrolling row grids, and confirm import actions.
+- CSV Import triggering links in FlatList headers in [ExpenseList.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ExpenseList.tsx).
+- 4 new unit tests (83 tests total) across [csvParser.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/utils/csvParser.test.ts) and [csvImport.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/csvImport.test.ts).
+
+### Changed
+- Refactored [expenseStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/expenseStorage.ts) to support bulk saves `addExpensesBulk` in a single atomic write.
+- Updated [expenseStorage.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/expenseStorage.test.ts) to verify atomic batch write arrays.
+- Expanded [useExpenses.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/hooks/useExpenses.ts) actions to manage CSV parser flows and cycle-seeding colors for imported categories.
+
 ## [0.16.0] - 2026-07-18
 ### Added
 - Income & Net Balance tracking. Added `type?: 'expense' | 'income'` support to the [Expense](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/models/expense.ts) data model and validation.

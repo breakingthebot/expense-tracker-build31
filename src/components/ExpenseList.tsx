@@ -16,6 +16,7 @@ interface ExpenseListProps {
   onDelete: (id: string) => void;
   onExport: () => void;
   exporting: boolean;
+  onImportClick: () => void;
   isFiltered?: boolean;
 }
 
@@ -26,6 +27,7 @@ export default function ExpenseList({
   onDelete,
   onExport,
   exporting,
+  onImportClick,
   isFiltered = false,
 }: ExpenseListProps) {
   if (expenses.length === 0) {
@@ -34,6 +36,11 @@ export default function ExpenseList({
         <Text style={styles.emptyStateText}>
           {isFiltered ? 'No matching transactions found.' : 'No transactions yet. Add your first one.'}
         </Text>
+        {!isFiltered && (
+          <TouchableOpacity style={styles.emptyImportButton} onPress={onImportClick} accessibilityRole="button">
+            <Text style={styles.emptyImportButtonText}>＋ Import transactions from CSV</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
@@ -46,16 +53,26 @@ export default function ExpenseList({
       ListHeaderComponent={
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Recent Transactions</Text>
-          <TouchableOpacity
-            onPress={onExport}
-            disabled={exporting}
-            accessibilityRole="button"
-            accessibilityLabel="Export transactions as CSV"
-          >
-            <Text style={[styles.exportButtonText, exporting && styles.exportButtonDisabledText]}>
-              {exporting ? 'Exporting...' : 'Export CSV'}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={onImportClick}
+              accessibilityRole="button"
+              accessibilityLabel="Import transactions from CSV"
+            >
+              <Text style={styles.importButtonText}>Import CSV</Text>
+            </TouchableOpacity>
+            <Text style={styles.actionPipe}>|</Text>
+            <TouchableOpacity
+              onPress={onExport}
+              disabled={exporting}
+              accessibilityRole="button"
+              accessibilityLabel="Export transactions as CSV"
+            >
+              <Text style={[styles.exportButtonText, exporting && styles.exportButtonDisabledText]}>
+                {exporting ? 'Exporting...' : 'Export CSV'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       }
       renderItem={({ item }) => {
@@ -109,6 +126,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#666',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionPipe: {
+    fontSize: 12,
+    color: '#ccc',
+  },
+  importButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1baf7a', // Green theme for import
   },
   exportButtonText: {
     fontSize: 13,
@@ -169,5 +200,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     textAlign: 'center',
+  },
+  emptyImportButton: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#1baf7a',
+    backgroundColor: '#fff',
+  },
+  emptyImportButtonText: {
+    color: '#1baf7a',
+    fontWeight: '600',
+    fontSize: 13,
   },
 });

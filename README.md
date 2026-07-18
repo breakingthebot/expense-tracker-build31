@@ -139,6 +139,13 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/ExpenseList.tsx` highlights incoming line items in high-contrast green.
 - `src/utils/csv.ts` appends a `Type` column header and mapped properties to data exports.
 
+### CSV Data Import (Iteration 17)
+- `src/utils/csvParser.ts` parses raw CSV strings into cell matrices complying with RFC 4180.
+- `src/services/csvImport.ts` extracts headers case-insensitively and returns validations with error-blocking bounds.
+- `src/services/expenseStorage.ts` introduces `addExpensesBulk` to write transaction batches atomically in a single write call.
+- `src/screens/HistoryScreen.tsx` launches a file picker overlay Modal with preview lists and confirmation triggers.
+- `src/components/ExpenseList.tsx` adds trigger buttons inside transaction lists and empty ledger views.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

@@ -1,23 +1,25 @@
 // src/hooks/useExpenses.ts
 // Shared data hook for the Add, History, and Chart screens. Loads expenses,
-// active recurring schedules, custom categories, and monthly budget goals on focus.
-// Executes the recurring expense generator to catch up on any due items, and exposes
-// CRUD operations for transactions, schedules, categories, and budget goals.
+// active recurring schedules, custom categories, monthly budget goals on focus.
+// Coordinates generators and CRUD actions for transactions, schedules, categories,
+// budget goals, and bulk CSV transaction imports.
 // Connects to: src/services/expenseStorage.ts, src/services/recurringStorage.ts,
-// src/services/recurringGenerator.ts, src/services/categoryStorage.ts, src/services/budgetStorage.ts, src/utils/date.ts
+// src/services/recurringGenerator.ts, src/services/categoryStorage.ts,
+// src/services/budgetStorage.ts, src/services/csvImport.ts, src/utils/date.ts
 // Created: 2026-07-12
 
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Expense, NewExpenseInput } from '../models/expense';
 import { NewRecurringInput, RecurringExpense } from '../models/recurring';
-import { Category } from '../services/categoryStorage';
+import { Category, getCategories, addCategory, renameCategory, deleteCategory } from '../services/categoryStorage';
 import { getBudgetGoals, setBudgetGoal } from '../services/budgetStorage';
 import {
   addExpense,
   deleteExpense,
   getAllExpenses,
   updateExpense,
+  addExpensesBulk,
 } from '../services/expenseStorage';
 import {
   addRecurringExpense,
@@ -25,17 +27,25 @@ import {
   getRecurringExpenses,
   saveSchedulesAndExpenses,
 } from '../services/recurringStorage';
-import {
-  getCategories,
-  addCategory,
-  renameCategory,
-  deleteCategory,
-} from '../services/categoryStorage';
 import { generateExpensesFromSchedules } from '../services/recurringGenerator';
+import { validateCsvImport, ValidationResult } from '../services/csvImport';
 import { todayIsoDate } from '../utils/date';
 import { logger } from '../utils/logger';
 
 const SCOPE = 'useExpenses';
+
+const IMPORT_PALETTE_COLORS = [
+  '#e34948', // Red
+  '#e87ba4', // Pink
+  '#4a3aa7', // Purple
+  '#2a78d6', // Blue
+  '#00a8cc', // Teal
+  '#1baf7a', // Green
+  '#008300', // Dark Green
+  '#eda100', // Yellow
+  '#eb6834', // Orange
+  '#3f51b5', // Indigo
+];
 
 interface UseExpensesResult {
   expenses: Expense[];
@@ -54,6 +64,7 @@ interface UseExpensesResult {
   editCategoryName: (id: string, newName: string) => Promise<void>;
   removeCategory: (id: string) => Promise<void>;
   updateBudgetGoal: (category: string, limitCents: number) => Promise<void>;
+  importTransactions: (csvContent: string) => Promise<ValidationResult>;
 }
 
 export function useExpenses(): UseExpensesResult {
@@ -192,6 +203,40 @@ export function useExpenses(): UseExpensesResult {
     }
   }
 
+  async function importTransactions(csvContent: string): Promise<ValidationResult> {
+    setSubmitting(true);
+    try {
+      const storedExpenses = await getAllExpenses();
+      const storedCategories = await getCategories();
+      const categoryNames = storedCategories.map((c) => c.name);
+
+      const validation = validateCsvImport(csvContent, storedExpenses, categoryNames);
+
+      if (validation.hasErrors || validation.validTransactions.length === 0) {
+        return validation;
+      }
+
+      // Step 1: Auto-create missing categories
+      let colorIndex = storedCategories.length % IMPORT_PALETTE_COLORS.length;
+      for (const catName of validation.importedCategories) {
+        const assignedColor = IMPORT_PALETTE_COLORS[colorIndex];
+        await addCategory(catName, assignedColor);
+        colorIndex = (colorIndex + 1) % IMPORT_PALETTE_COLORS.length;
+      }
+
+      // Step 2: Batch import valid transactions in a single write call
+      await addExpensesBulk(validation.validTransactions);
+      
+      await refresh();
+      return validation;
+    } catch (error) {
+      logger.error(SCOPE, 'CSV Bulk Import failed', { error: String(error) });
+      throw error;
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return {
     expenses,
     recurringSchedules,
@@ -209,5 +254,6 @@ export function useExpenses(): UseExpensesResult {
     editCategoryName,
     removeCategory,
     updateBudgetGoal,
+    importTransactions,
   };
 }

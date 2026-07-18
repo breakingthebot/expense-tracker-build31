@@ -11,6 +11,7 @@ import {
   deleteExpense,
   getAllExpenses,
   updateExpense,
+  addExpensesBulk,
 } from '../../src/services/expenseStorage';
 
 const validInput = {
@@ -18,6 +19,7 @@ const validInput = {
   category: 'Food' as const,
   note: 'Coffee',
   date: '2026-07-10',
+  type: 'expense' as const,
 };
 
 beforeEach(async () => {
@@ -125,5 +127,24 @@ describe('deleteExpense', () => {
     await deleteExpense('does-not-exist');
     const all = await getAllExpenses();
     expect(all).toHaveLength(1);
+  });
+});
+
+describe('addExpensesBulk', () => {
+  it('saves multiple transactions atomically', async () => {
+    const inputs = [
+      { amountCents: 500, category: 'Food', note: 'Apples', date: '2026-07-18', type: 'expense' as const },
+      { amountCents: 12000, category: 'Utilities', note: 'Electricity', date: '2026-07-18', type: 'expense' as const },
+      { amountCents: 50000, category: 'Other', note: 'Gift', date: '2026-07-18', type: 'income' as const },
+    ];
+
+    const result = await addExpensesBulk(inputs);
+    expect(result).toHaveLength(3);
+    expect(result[0].id).toBeTruthy();
+    expect(result[0].createdAt).toBeTruthy();
+    expect(result[2].type).toBe('income');
+
+    const all = await getAllExpenses();
+    expect(all).toHaveLength(3);
   });
 });
