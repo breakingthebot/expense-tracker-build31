@@ -3,6 +3,10 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.35.0] - 2026-07-18
+### Added
+- Dashboard Budget Progress Widget. Created [BudgetProgressWidget.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/BudgetProgressWidget.tsx) to render monthly budget status progress indicators colored in matching category styles directly on the main Add screen dashboard, highlighting overspent categories in warning formats.
+
 ## [0.34.0] - 2026-07-18
 ### Added
 - Category Budget Goal Overspent Push Notifications. Built a premium universal [ToastProvider.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ToastProvider.tsx) rendering slide-down glassmorphic alerts and dispatching OS-native browser push alerts when permission is granted.

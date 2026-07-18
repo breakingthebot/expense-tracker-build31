@@ -21,6 +21,7 @@ import {
   View,
 } from 'react-native';
 import AddExpenseForm, { AddFormSubmitData } from '../components/AddExpenseForm';
+import BudgetProgressWidget from '../components/BudgetProgressWidget';
 import { useExpenses } from '../hooks/useExpenses';
 import { TabParamList } from '../types/navigation';
 import { formatCents, parseDollarsToCents, centsToInputString } from '../utils/currency';
@@ -45,6 +46,7 @@ export default function AddScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<TabParamList, 'Add'>>();
   const {
+    expenses,
     submitting,
     addNewExpense,
     editExpense,
@@ -206,6 +208,19 @@ export default function AddScreen() {
           editingExpense={editingExpense}
           onCancelEdit={handleCancelEdit}
         />
+
+        {/* Monthly Budget Progress Widget */}
+        {!editingExpense && (
+          <BudgetProgressWidget
+            expenses={expenses}
+            categories={categories}
+            budgetGoals={budgetGoals}
+            onManagePress={() => {
+              setCatError(null);
+              setShowCatModal(true);
+            }}
+          />
+        )}
 
         {/* Categories Settings Launcher (hidden in edit mode) */}
         {!editingExpense && (

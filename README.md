@@ -224,6 +224,10 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/services/budgetAlert.ts` computes category aggregate crossings dynamically.
 - `src/hooks/useExpenses.ts` connects adding/modifying transactions with crossing alerts.
 
+### Dashboard Budget Progress Widget (Iteration 35)
+- `src/components/BudgetProgressWidget.tsx` displays monthly spending progress details relative to category limits.
+- `src/screens/AddScreen.tsx` embeds the widget above settings launchers.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no
