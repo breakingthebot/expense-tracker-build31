@@ -194,6 +194,9 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/ExpenseList.tsx` replaces transaction category names with touchable, dropdown-indicated badges.
 - `src/screens/HistoryScreen.tsx` features a fast-action Category Swap grid overlay allowing quick-change triggers for selected items.
 
+### Web Alert/Confirm Dialogs compatibility (Iteration 28)
+- `src/screens/HistoryScreen.tsx` adds a cross-platform helper `showAlert` which detects if running on Web and uses standard browser alert/confirm APIs. This prevents silent execution blockages when deleting items, exporting files, or resetting storage.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

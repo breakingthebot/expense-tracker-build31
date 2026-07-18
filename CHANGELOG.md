@@ -3,6 +3,10 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.28.0] - 2026-07-18
+### Fixed
+- Web Alert/Confirm Dialogs compatibility. Implemented a cross-platform wrapper function `showAlert` in [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx) mapping to native `Alert.alert` on mobile and `window.confirm`/`window.alert` on web, resolving the bug where delete confirmations, export warnings, and databases wipes failed silently in browser engines.
+
 ## [0.27.0] - 2026-07-18
 ### Added
 - Interactive Transaction Category Swapping. Replaced static category labels inside [ExpenseList.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ExpenseList.tsx) with a styled, touchable category badge dropdown trigger.

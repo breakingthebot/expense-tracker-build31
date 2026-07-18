@@ -36,6 +36,41 @@ import { logger } from '../utils/logger';
 import { useTheme } from '../components/ThemeProvider';
 import { addDaysToIso, todayIsoDate, getThisWeekRange, getLast7DaysRange, getThisMonthRange } from '../utils/date';
 
+function showAlert(
+  title: string,
+  message?: string,
+  buttons?: { text?: string; onPress?: () => void; style?: string }[]
+) {
+  if (Platform.OS === 'web') {
+    const fullMessage = message ? `${title}\n\n${message}` : title;
+    if (!buttons || buttons.length === 0) {
+      window.alert(fullMessage);
+      return;
+    }
+    if (buttons.length === 1) {
+      window.alert(fullMessage);
+      if (buttons[0].onPress) {
+        buttons[0].onPress();
+      }
+      return;
+    }
+    const cancelBtn = buttons.find((b) => b.style === 'cancel');
+    const primaryBtn = buttons.find((b) => b.style !== 'cancel') || buttons[0];
+    const confirmed = window.confirm(fullMessage);
+    if (confirmed) {
+      if (primaryBtn && primaryBtn.onPress) {
+        primaryBtn.onPress();
+      }
+    } else {
+      if (cancelBtn && cancelBtn.onPress) {
+        cancelBtn.onPress();
+      }
+    }
+  } else {
+    Alert.alert(title, message, buttons as any);
+  }
+}
+
 const SCOPE = 'HistoryScreen';
 
 export default function HistoryScreen() {
@@ -158,7 +193,7 @@ export default function HistoryScreen() {
   }
 
   function handleDelete(id: string) {
-    Alert.alert('Delete transaction?', 'This cannot be undone.', [
+    showAlert('Delete transaction?', 'This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -168,7 +203,7 @@ export default function HistoryScreen() {
             await removeExpense(id);
           } catch (error) {
             logger.error(SCOPE, 'Failed to delete transaction', { error: String(error) });
-            Alert.alert('Could not delete transaction', 'Please try again.');
+            showAlert('Could not delete transaction', 'Please try again.');
           }
         },
       },
@@ -177,7 +212,7 @@ export default function HistoryScreen() {
 
   async function handleExport() {
     if (filteredExpenses.length === 0) {
-      Alert.alert('No Data', 'There are no transactions in the current range to export.');
+      showAlert('No Data', 'There are no transactions in the current range to export.');
       return;
     }
     setShowExportModal(true);
@@ -190,7 +225,7 @@ export default function HistoryScreen() {
       setShowExportModal(false);
     } catch (error) {
       logger.error(SCOPE, 'Export execution failed', { error: String(error) });
-      Alert.alert('Export Failed', error instanceof Error ? error.message : 'Please try again.');
+      showAlert('Export Failed', error instanceof Error ? error.message : 'Please try again.');
     } finally {
       setExporting(false);
     }
@@ -216,7 +251,7 @@ export default function HistoryScreen() {
       setCategorySwapModalVisible(false);
     } catch (error) {
       logger.error(SCOPE, 'Failed to swap category', { error: String(error) });
-      Alert.alert('Error', 'Could not update category. Please try again.');
+      showAlert('Error', 'Could not update category. Please try again.');
     }
   }
 
@@ -248,7 +283,7 @@ export default function HistoryScreen() {
     if (Platform.OS === 'web') {
       fileInputRef.current?.click();
     } else {
-      Alert.alert('Web Feature', 'CSV file uploads are optimized for the web client.');
+      showAlert('Web Feature', 'CSV file uploads are optimized for the web client.');
     }
   }
 
@@ -262,7 +297,7 @@ export default function HistoryScreen() {
       setShowImportModal(false);
       setValidationResult(null);
       setCsvRawText('');
-      Alert.alert('Import Successful', `Successfully imported ${res.validTransactions.length} transactions!`);
+      showAlert('Import Successful', `Successfully imported ${res.validTransactions.length} transactions!`);
     } catch (err) {
       logger.error(SCOPE, 'Execute import failed', { error: String(err) });
       setImportError(err instanceof Error ? err.message : 'Bulk import failed. Check file cells.');
@@ -797,7 +832,7 @@ export default function HistoryScreen() {
             <TouchableOpacity
               style={styles.modalWipeButton}
               onPress={() => {
-                Alert.alert(
+                showAlert(
                   'Wipe Database',
                   'Are you sure you want to delete all transactions, recurring templates, and budget limits? This action is permanent.',
                   [
