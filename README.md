@@ -239,6 +239,10 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 ### Interactive Forecast Exclusions (Iteration 38)
 - `src/components/ForecastView.tsx` manages user timeline exclusion selections and updates projected balances dynamically.
 
+### Dashboard Quick Add Presets (Iteration 39)
+- `src/screens/AddScreen.tsx` defines and renders the row of three tap-to-add shortcut capsules: Coffee, Bus Fare, and Movie.
+- Tapping a capsule executes `handleQuickAddPreset`, adding the predefined expense transaction instantly using `addNewExpense` and redirecting to the `History` tab.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

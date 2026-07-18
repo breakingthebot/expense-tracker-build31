@@ -42,6 +42,12 @@ const PALETTE_COLORS = [
   '#607d8b', // Slate
 ];
 
+const PRESETS = [
+  { emoji: '☕', note: 'Coffee', category: 'Food', amountCents: 500 },
+  { emoji: '🚌', note: 'Bus Fare', category: 'Transportation', amountCents: 275 },
+  { emoji: '🎬', note: 'Movie', category: 'Entertainment', amountCents: 1500 },
+];
+
 export default function AddScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<TabParamList, 'Add'>>();
@@ -195,6 +201,27 @@ export default function AddScreen() {
     }
   }
 
+  async function handleQuickAddPreset(preset: typeof PRESETS[0]) {
+    const finalCategory = categories.find((c) => c.name === preset.category)
+      ? preset.category
+      : (categories.find((c) => c.isSystem)?.name || categories[0]?.name || 'Other');
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    try {
+      await addNewExpense({
+        amountCents: preset.amountCents,
+        category: finalCategory,
+        note: preset.note,
+        date: todayStr,
+        type: 'expense',
+      });
+      navigation.navigate('History');
+    } catch (err) {
+      // Handled in storage layer alerts
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
@@ -208,6 +235,34 @@ export default function AddScreen() {
           editingExpense={editingExpense}
           onCancelEdit={handleCancelEdit}
         />
+
+        {/* Quick Add Presets row */}
+        {!editingExpense && (
+          <View style={styles.presetsContainer}>
+            <Text style={styles.presetsTitle}>Quick Add Presets</Text>
+            <View style={styles.presetsRow}>
+              {PRESETS.map((preset, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.presetChip}
+                  onPress={() => handleQuickAddPreset(preset)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Quick add ${preset.note} preset`}
+                >
+                  <Text style={styles.presetEmoji}>{preset.emoji}</Text>
+                  <View style={styles.presetTextCol}>
+                    <Text style={styles.presetNote} numberOfLines={1}>
+                      {preset.note}
+                    </Text>
+                    <Text style={styles.presetValue}>
+                      {formatCents(preset.amountCents)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Monthly Budget Progress Widget */}
         {!editingExpense && (
@@ -895,5 +950,52 @@ const createStyles = (colors: any, isDark: boolean) =>
     },
     reorderArrowDisabled: {
       color: colors.textMuted,
+    },
+    presetsContainer: {
+      paddingHorizontal: 16,
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    presetsTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 10,
+    },
+    presetsRow: {
+      flexDirection: 'row',
+      gap: 10,
+      justifyContent: 'space-between',
+    },
+    presetChip: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 12,
+      paddingVertical: 8,
+      paddingHorizontal: 8,
+      gap: 6,
+    },
+    presetEmoji: {
+      fontSize: 16,
+    },
+    presetTextCol: {
+      flex: 1,
+      flexDirection: 'column',
+    },
+    presetNote: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    presetValue: {
+      fontSize: 10,
+      color: colors.textSecondary,
+      marginTop: 1,
     },
   });

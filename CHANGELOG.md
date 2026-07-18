@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.39.0] - 2026-07-18
+### Added
+- Dashboard Interactive Quick Add Presets. Rendered 3 tap-to-add shortcut capsules under the transaction form in [AddScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/AddScreen.tsx) (Coffee `$5.00`, Bus Fare `$2.75`, and Movie `$15.00`) to log frequent expenses instantly.
+- Added component-level presets testing in [AddScreen.test.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/components/AddScreen.test.tsx).
+
 ## [0.38.0] - 2026-07-18
 ### Added
 - Interactive Forecast Ledger Row Deletion. Enabled in-memory toggle exclusions inside [ForecastView.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ForecastView.tsx) to temporarily exclude individual recurring projections or future manual transactions.
