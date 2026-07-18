@@ -4,7 +4,8 @@
 // Handles month navigation globally so changing the month shifts both views.
 // Connects to: src/hooks/useExpenses.ts, src/services/monthlySummary.ts,
 // src/services/trendSummary.ts, src/components/MonthlyChart.tsx,
-// src/components/TrendChart.tsx, src/components/ScreenStatus.tsx
+// src/components/TrendChart.tsx, src/components/ScreenStatus.tsx,
+// src/components/ThemeProvider.tsx
 // Created: 2026-07-12
 
 import { useMemo, useState } from 'react';
@@ -16,11 +17,16 @@ import { useExpenses } from '../hooks/useExpenses';
 import { currentMonthKey, summarizeMonth } from '../services/monthlySummary';
 import { getTrendSummary } from '../services/trendSummary';
 import { formatMonthLabel, shiftMonthKey } from '../utils/date';
+import { useTheme } from '../components/ThemeProvider';
 
 export default function ChartScreen() {
   const { expenses, categories, budgetGoals, loading, loadError } = useExpenses();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
   const [viewMode, setViewMode] = useState<'monthly' | 'trend'>('monthly');
+
+  // Theme support
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
 
   // Compute a list of category names for monthly summary matching
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
@@ -121,69 +127,70 @@ export default function ChartScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  monthNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    marginTop: 12,
-  },
-  monthNavButton: {
-    minWidth: 44,
-    minHeight: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  monthNavArrow: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#0b0b0b',
-  },
-  monthNavArrowDisabled: {
-    color: '#c3c2b7',
-  },
-  monthLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    minWidth: 120,
-    textAlign: 'center',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 8,
-    backgroundColor: '#f2f2f2',
-    borderRadius: 8,
-    padding: 3,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  toggleButtonActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  toggleText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#666',
-  },
-  toggleTextActive: {
-    fontWeight: '600',
-    color: '#2f6feb',
-  },
-});
+const createStyles = (colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    monthNav: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      marginTop: 12,
+    },
+    monthNavButton: {
+      minWidth: 44,
+      minHeight: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    monthNavArrow: {
+      fontSize: 24,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    monthNavArrowDisabled: {
+      color: colors.textMuted,
+    },
+    monthLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+      minWidth: 120,
+      textAlign: 'center',
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      marginHorizontal: 16,
+      marginTop: 12,
+      marginBottom: 8,
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 8,
+      padding: 3,
+    },
+    toggleButton: {
+      flex: 1,
+      paddingVertical: 8,
+      alignItems: 'center',
+      borderRadius: 6,
+    },
+    toggleButtonActive: {
+      backgroundColor: colors.background,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: isDark ? 0.2 : 0.1,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    toggleText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.textSecondary,
+    },
+    toggleTextActive: {
+      fontWeight: '600',
+      color: colors.primary,
+    },
+  });

@@ -50,6 +50,7 @@ export async function addRecurringExpense(input: NewRecurringInput): Promise<Rec
     startDate: input.startDate,
     lastGeneratedDate: null, // initially null so the first generation triggers
     createdAt: new Date().toISOString(),
+    type: input.type ?? 'expense',
   };
 
   schedules.push(newSchedule);

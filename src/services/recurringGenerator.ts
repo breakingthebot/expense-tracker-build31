@@ -121,6 +121,7 @@ export function generateExpensesFromSchedules(
           note: schedule.note,
           date: dateStr,
           createdAt: new Date().toISOString(),
+          type: schedule.type ?? 'expense',
         });
       });
 

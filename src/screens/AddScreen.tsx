@@ -3,9 +3,9 @@
 // and lists active recurring expense schedules. Features a "Manage Categories"
 // button and modal allowing the user to create, rename, or delete custom
 // categories using a gorgeous 12-color swatch, as well as set and edit monthly
-// budget limits per category.
+// budget limits per category. Adapts style dynamically using useTheme.
 // Connects to: src/components/AddExpenseForm.tsx, src/hooks/useExpenses.ts,
-// src/utils/currency.ts, src/services/budgetStorage.ts
+// src/utils/currency.ts, src/services/budgetStorage.ts, src/components/ThemeProvider.tsx
 // Created: 2026-07-17
 
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
@@ -24,6 +24,7 @@ import AddExpenseForm, { AddFormSubmitData } from '../components/AddExpenseForm'
 import { useExpenses } from '../hooks/useExpenses';
 import { TabParamList } from '../types/navigation';
 import { formatCents, parseDollarsToCents, centsToInputString } from '../utils/currency';
+import { useTheme } from '../components/ThemeProvider';
 
 const PALETTE_COLORS = [
   '#e34948', // Red
@@ -60,6 +61,10 @@ export default function AddScreen() {
 
   const editingExpense = route.params?.editingExpense;
 
+  // Theme states
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
+
   // Category modal states
   const [showCatModal, setShowCatModal] = useState(false);
   const [newCatName, setNewCatName] = useState('');
@@ -80,25 +85,29 @@ export default function AddScreen() {
         category: input.category,
         note: input.note,
         date: input.date,
+        type: input.type,
       });
       navigation.setParams({ editingExpense: undefined });
       navigation.navigate('History');
-    } else if (input.isRecurring && input.interval) {
-      await addNewRecurringExpense({
-        amountCents: input.amountCents,
-        category: input.category,
-        note: input.note,
-        interval: input.interval,
-        startDate: input.date,
-      });
-      navigation.navigate('History');
     } else {
-      await addNewExpense({
-        amountCents: input.amountCents,
-        category: input.category,
-        note: input.note,
-        date: input.date,
-      });
+      if (input.isRecurring) {
+        await addNewRecurringExpense({
+          amountCents: input.amountCents,
+          category: input.category,
+          note: input.note,
+          startDate: input.date,
+          interval: input.interval ?? 'monthly',
+          type: input.type,
+        });
+      } else {
+        await addNewExpense({
+          amountCents: input.amountCents,
+          category: input.category,
+          note: input.note,
+          date: input.date,
+          type: input.type,
+        });
+      }
       navigation.navigate('History');
     }
   }
@@ -242,7 +251,7 @@ export default function AddScreen() {
                   value={newCatName}
                   onChangeText={setNewCatName}
                   placeholder="e.g. Subscriptions"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.textMuted}
                   accessibilityLabel="New category name"
                 />
                 <TouchableOpacity
@@ -251,181 +260,166 @@ export default function AddScreen() {
                   disabled={!newCatName.trim()}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.modalAddButtonText}>＋ Add</Text>
+                  <Text style={styles.modalAddButtonText}>Add</Text>
                 </TouchableOpacity>
               </View>
 
               {/* Color Swatch Picker */}
-              <View style={styles.colorSwatchRow}>
-                {PALETTE_COLORS.map((color) => {
-                  const isSelected = newCatColor === color;
+              <View style={styles.swatchGrid}>
+                {PALETTE_COLORS.map((col) => {
+                  const isChosen = newCatColor === col;
                   return (
                     <TouchableOpacity
-                      key={color}
+                      key={col}
                       style={[
-                        styles.colorCircle,
-                        { backgroundColor: color },
-                        isSelected && styles.colorCircleSelected,
+                        styles.swatchCircle,
+                        { backgroundColor: col },
+                        isChosen && styles.swatchCircleChosen,
                       ]}
-                      onPress={() => setNewCatColor(color)}
+                      onPress={() => setNewCatColor(col)}
                       accessibilityRole="button"
-                      accessibilityState={{ selected: isSelected }}
+                      accessibilityLabel={`Select color ${col}`}
                     />
                   );
                 })}
               </View>
             </View>
 
+            {/* Feedback messages */}
             {catError && <Text style={styles.modalError}>{catError}</Text>}
 
-            {/* Categories & Budgets Scrolling List */}
+            {/* Scrollable list of existing categories */}
             <ScrollView style={styles.modalList} contentContainerStyle={styles.modalListContent}>
               {categories.map((cat) => {
-                const isEditingThis = editingCatId === cat.id;
-                const isConfirmingDelete = confirmDeleteId === cat.id;
+                const isSystem = cat.id.startsWith('sys-');
+                const isEditing = editingCatId === cat.id;
+                const isConfirming = confirmDeleteId === cat.id;
                 const isEditingBudget = editingBudgetCatName === cat.name;
-                const currentBudget = budgetGoals[cat.name] ?? 0;
+
+                const catBudget = budgetGoals[cat.name] || 0;
 
                 return (
-                  <View key={cat.id} style={styles.modalListItem}>
-                    <View style={styles.itemMainRow}>
-                      <View style={[styles.bulletCircle, { backgroundColor: cat.color }]} />
+                  <View key={cat.id} style={styles.modalRow}>
+                    <View style={styles.modalRowLeft}>
+                      {/* Category color indicator */}
+                      <View style={[styles.modalColorDot, { backgroundColor: cat.color }]} />
 
-                      {isEditingThis ? (
-                        <View style={styles.modalEditContainer}>
+                      {isEditing ? (
+                        <View style={styles.modalEditInputRow}>
                           <TextInput
                             style={styles.modalEditInput}
                             value={editingCatName}
                             onChangeText={setEditingCatName}
                             autoFocus
-                            accessibilityLabel="Edit category name"
+                            accessibilityLabel="Edit category name field"
                           />
                           <TouchableOpacity
-                            style={styles.modalSaveButton}
+                            style={styles.modalRenameButton}
                             onPress={() => handleSaveRename(cat.id)}
                             accessibilityRole="button"
                           >
-                            <Text style={styles.modalSaveButtonText}>✓</Text>
+                            <Text style={styles.modalRenameButtonText}>Rename</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
-                            style={styles.modalCancelButton}
-                            onPress={() => {
-                              setEditingCatId(null);
-                              setEditingCatName('');
-                            }}
+                            style={styles.modalCancelRename}
+                            onPress={() => setEditingCatId(null)}
                             accessibilityRole="button"
                           >
-                            <Text style={styles.modalCancelButtonText}>✕</Text>
+                            <Text style={styles.modalCancelRenameText}>✕</Text>
                           </TouchableOpacity>
                         </View>
                       ) : (
-                        <>
-                          <Text style={styles.modalItemText}>{cat.name}</Text>
-                          {cat.isSystem ? (
-                            <Text style={styles.systemTag}>System</Text>
-                          ) : (
-                            <View style={styles.modalItemActions}>
+                        <View style={styles.categoryNameCol}>
+                          <Text style={styles.modalCategoryName}>
+                            {cat.name} {isSystem && <Text style={styles.modalSystemBadge}>(System)</Text>}
+                          </Text>
+
+                          {/* Category monthly budget targets settings */}
+                          <View style={styles.budgetRow}>
+                            {isEditingBudget ? (
+                              <View style={styles.budgetEditInline}>
+                                <TextInput
+                                  style={styles.budgetInput}
+                                  value={editingBudgetText}
+                                  onChangeText={setEditingBudgetText}
+                                  keyboardType="decimal-pad"
+                                  placeholder="0.00"
+                                  placeholderTextColor={colors.textMuted}
+                                  autoFocus
+                                  accessibilityLabel="Monthly budget target input"
+                                />
+                                <TouchableOpacity
+                                  style={styles.budgetSaveButton}
+                                  onPress={() => handleSaveBudget(cat.name)}
+                                  accessibilityRole="button"
+                                >
+                                  <Text style={styles.budgetSaveButtonText}>Save</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={styles.budgetCancelButton}
+                                  onPress={() => setEditingBudgetCatName(null)}
+                                  accessibilityRole="button"
+                                >
+                                  <Text style={styles.budgetCancelButtonText}>✕</Text>
+                                </TouchableOpacity>
+                              </View>
+                            ) : catBudget > 0 ? (
+                              <View style={styles.budgetDisplayRow}>
+                                <Text style={styles.budgetDisplayText}>
+                                  Budget: <Text style={styles.budgetValue}>{formatCents(catBudget)}</Text>
+                                </Text>
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    setEditingBudgetCatName(cat.name);
+                                    setEditingBudgetText(centsToInputString(catBudget));
+                                  }}
+                                  accessibilityRole="button"
+                                >
+                                  <Text style={styles.budgetActionEdit}>Edit</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  onPress={() => updateBudgetGoal(cat.name, 0)}
+                                  accessibilityRole="button"
+                                >
+                                  <Text style={styles.budgetActionClear}>Clear</Text>
+                                </TouchableOpacity>
+                              </View>
+                            ) : (
                               <TouchableOpacity
-                                style={styles.modalItemEdit}
                                 onPress={() => {
-                                  setEditingCatId(cat.id);
-                                  setEditingCatName(cat.name);
+                                  setEditingBudgetCatName(cat.name);
+                                  setEditingBudgetText('');
                                 }}
                                 accessibilityRole="button"
-                                accessibilityLabel={`Rename category ${cat.name}`}
                               >
-                                <Text style={styles.modalItemEditText}>✎</Text>
+                                <Text style={styles.setBudgetLink}>＋ Set Monthly Budget</Text>
                               </TouchableOpacity>
-
-                              <TouchableOpacity
-                                style={[
-                                  styles.modalItemDelete,
-                                  isConfirmingDelete && styles.modalItemDeleteConfirm,
-                                ]}
-                                onPress={() => handleDeleteCategory(cat.id)}
-                                accessibilityRole="button"
-                                accessibilityLabel={`Delete category ${cat.name}`}
-                              >
-                                <Text
-                                  style={[
-                                    styles.modalItemDeleteText,
-                                    isConfirmingDelete && styles.modalItemDeleteTextConfirm,
-                                  ]}
-                                >
-                                  {isConfirmingDelete ? 'Confirm?' : '✕'}
-                                </Text>
-                              </TouchableOpacity>
-                            </View>
-                          )}
-                        </>
+                            )}
+                          </View>
+                        </View>
                       )}
                     </View>
 
-                    {/* Inline Budget Setter Row */}
-                    {!isEditingThis && (
-                      <View style={styles.budgetRow}>
-                        {isEditingBudget ? (
-                          <View style={styles.budgetEditInline}>
-                            <TextInput
-                              style={styles.budgetInput}
-                              value={editingBudgetText}
-                              onChangeText={setEditingBudgetText}
-                              placeholder="0.00 limit"
-                              placeholderTextColor="#999"
-                              keyboardType="decimal-pad"
-                              autoFocus
-                              accessibilityLabel={`Limit for ${cat.name}`}
-                            />
-                            <TouchableOpacity
-                              style={styles.budgetSaveButton}
-                              onPress={() => handleSaveBudget(cat.name)}
-                              accessibilityRole="button"
-                            >
-                              <Text style={styles.budgetSaveButtonText}>Save</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.budgetCancelButton}
-                              onPress={() => {
-                                setEditingBudgetCatName(null);
-                                setEditingBudgetText('');
-                              }}
-                              accessibilityRole="button"
-                            >
-                              <Text style={styles.budgetCancelButtonText}>✕</Text>
-                            </TouchableOpacity>
-                          </View>
-                        ) : currentBudget > 0 ? (
-                          <View style={styles.budgetDisplayRow}>
-                            <Text style={styles.budgetDisplayText}>
-                              Budget Limit: <Text style={styles.budgetValue}>{formatCents(currentBudget)}</Text>/mo
-                            </Text>
-                            <TouchableOpacity
-                              onPress={() => {
-                                setEditingBudgetCatName(cat.name);
-                                setEditingBudgetText(centsToInputString(currentBudget));
-                              }}
-                              accessibilityRole="button"
-                            >
-                              <Text style={styles.budgetActionEdit}>Edit</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => updateBudgetGoal(cat.name, 0)}
-                              accessibilityRole="button"
-                            >
-                              <Text style={styles.budgetActionClear}>Remove</Text>
-                            </TouchableOpacity>
-                          </View>
-                        ) : (
-                          <TouchableOpacity
-                            onPress={() => {
-                              setEditingBudgetCatName(cat.name);
-                              setEditingBudgetText('');
-                            }}
-                            accessibilityRole="button"
-                          >
-                            <Text style={styles.setBudgetLink}>＋ Set Monthly Budget Goal</Text>
-                          </TouchableOpacity>
-                        )}
+                    {/* Actions block */}
+                    {!isSystem && !isEditing && (
+                      <View style={styles.modalRowActions}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setEditingCatId(cat.id);
+                            setEditingCatName(cat.name);
+                          }}
+                          accessibilityRole="button"
+                        >
+                          <Text style={styles.modalRenameText}>Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => handleDeleteCategory(cat.id)}
+                          accessibilityRole="button"
+                        >
+                          <Text style={[styles.modalDeleteText, isConfirming && styles.modalDeleteTextConfirm]}>
+                            {isConfirming ? 'Tap to Confirm' : 'Delete'}
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     )}
                   </View>
@@ -438,7 +432,7 @@ export default function AddScreen() {
               onPress={() => setShowCatModal(false)}
               accessibilityRole="button"
             >
-              <Text style={styles.modalCloseButtonText}>Close Settings</Text>
+              <Text style={styles.modalCloseButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -447,389 +441,374 @@ export default function AddScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  configSection: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  configButton: {
-    backgroundColor: '#fafafa',
-    borderWidth: 1,
-    borderColor: '#e5e5e5',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  configButtonText: {
-    fontSize: 13,
-    color: '#555',
-    fontWeight: '600',
-  },
-  recurringSection: {
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-  sectionHeader: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 12,
-  },
-  scheduleCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  scheduleDetails: {
-    flex: 1,
-  },
-  scheduleNote: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  scheduleSubtext: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
-  },
-  scheduleRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  scheduleAmount: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#333',
-  },
-  deleteButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#fee2e2',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteButtonText: {
-    fontSize: 11,
-    color: '#ef4444',
-    fontWeight: 'bold',
-  },
-  // Modal Styling
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContainer: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    maxHeight: '90%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#222',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  modalSubLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 6,
-  },
-  modalAddCard: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-    padding: 12,
-    marginBottom: 12,
-  },
-  modalAddRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  modalAddInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    backgroundColor: '#fff',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    fontSize: 14,
-    color: '#333',
-  },
-  modalAddButton: {
-    backgroundColor: '#2f6feb',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 6,
-    justifyContent: 'center',
-  },
-  modalAddButtonDisabled: {
-    opacity: 0.5,
-  },
-  modalAddButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  colorSwatchRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 10,
-    justifyContent: 'space-between',
-  },
-  colorCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  colorCircleSelected: {
-    borderWidth: 2,
-    borderColor: '#333',
-    transform: [{ scale: 1.15 }],
-  },
-  modalError: {
-    color: '#c0392b',
-    fontSize: 12,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  modalList: {
-    flex: 1,
-    minHeight: 180,
-  },
-  modalListContent: {
-    paddingBottom: 8,
-  },
-  modalListItem: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f3f3',
-  },
-  itemMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bulletCircle: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    marginRight: 10,
-  },
-  modalItemText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
-  },
-  systemTag: {
-    fontSize: 11,
-    color: '#888',
-    backgroundColor: '#eee',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  modalItemActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  modalItemEdit: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    backgroundColor: '#fafafa',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalItemEditText: {
-    fontSize: 12,
-    color: '#666',
-  },
-  modalItemDelete: {
-    minWidth: 28,
-    height: 28,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#fee2e2',
-    backgroundColor: '#fff5f5',
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalItemDeleteConfirm: {
-    backgroundColor: '#ef4444',
-    borderColor: '#ef4444',
-  },
-  modalItemDeleteText: {
-    fontSize: 11,
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-  modalItemDeleteTextConfirm: {
-    color: '#fff',
-  },
-  modalEditContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  modalEditInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#2f6feb',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    fontSize: 14,
-    backgroundColor: '#fff',
-    color: '#333',
-  },
-  modalSaveButton: {
-    width: 28,
-    height: 28,
-    backgroundColor: '#1baf7a',
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalSaveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
-  modalCancelButton: {
-    width: 28,
-    height: 28,
-    backgroundColor: '#666',
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCancelButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 11,
-  },
-  modalCloseButton: {
-    backgroundColor: '#333',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 14,
-  },
-  modalCloseButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  // Budget Swatch Styles
-  budgetRow: {
-    paddingLeft: 24,
-    marginTop: 6,
-  },
-  setBudgetLink: {
-    fontSize: 11,
-    color: '#2f6feb',
-    fontWeight: '600',
-  },
-  budgetDisplayRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  budgetDisplayText: {
-    fontSize: 11,
-    color: '#666',
-  },
-  budgetValue: {
-    fontWeight: '700',
-    color: '#444',
-  },
-  budgetActionEdit: {
-    fontSize: 11,
-    color: '#2f6feb',
-    textDecorationLine: 'underline',
-  },
-  budgetActionClear: {
-    fontSize: 11,
-    color: '#ef4444',
-    textDecorationLine: 'underline',
-  },
-  budgetEditInline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  budgetInput: {
-    width: 90,
-    borderWidth: 1,
-    borderColor: '#2f6feb',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    fontSize: 12,
-    backgroundColor: '#fff',
-    color: '#333',
-  },
-  budgetSaveButton: {
-    backgroundColor: '#1baf7a',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  budgetSaveButtonText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  budgetCancelButton: {
-    backgroundColor: '#666',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  budgetCancelButtonText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-});
+const createStyles = (colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      paddingBottom: 32,
+    },
+    configSection: {
+      paddingHorizontal: 16,
+      marginTop: 12,
+    },
+    configButton: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.2 : 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    configButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    recurringSection: {
+      paddingHorizontal: 16,
+      marginTop: 24,
+    },
+    sectionHeader: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 10,
+    },
+    scheduleCard: {
+      flexDirection: 'row',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 10,
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.2 : 0.05,
+      shadowRadius: 4,
+      elevation: 1,
+    },
+    scheduleDetails: {
+      flex: 1,
+      paddingRight: 12,
+    },
+    scheduleNote: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    scheduleSubtext: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 4,
+    },
+    scheduleRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    scheduleAmount: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    deleteButton: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: isDark ? '#3d1c1c' : '#fde8e8',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    deleteButtonText: {
+      fontSize: 11,
+      color: colors.error,
+      fontWeight: 'bold',
+    },
+    // Modal Overlay Settings
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    modalContainer: {
+      width: '100%',
+      maxWidth: 460,
+      backgroundColor: colors.background,
+      borderRadius: 16,
+      padding: 20,
+      maxHeight: '90%',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.4 : 0.15,
+      shadowRadius: 12,
+      elevation: 5,
+      borderWidth: isDark ? 1 : 0,
+      borderColor: colors.border,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    modalAddCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 12,
+      marginBottom: 14,
+    },
+    modalSubLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+    modalAddRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginBottom: 12,
+    },
+    modalAddInput: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      backgroundColor: colors.background,
+      color: colors.text,
+    },
+    modalAddButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingHorizontal: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalAddButtonDisabled: {
+      backgroundColor: colors.borderSecondary,
+    },
+    modalAddButtonText: {
+      color: '#fff',
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    swatchGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      justifyContent: 'space-between',
+    },
+    swatchCircle: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      borderWidth: 1.5,
+      borderColor: 'transparent',
+    },
+    swatchCircleChosen: {
+      borderColor: colors.text,
+      transform: [{ scale: 1.15 }],
+    },
+    modalError: {
+      color: colors.error,
+      fontSize: 12,
+      marginBottom: 10,
+      textAlign: 'center',
+    },
+    modalList: {
+      flex: 1,
+      maxHeight: 250,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+    },
+    modalListContent: {
+      paddingHorizontal: 10,
+    },
+    modalRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalRowLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      paddingRight: 10,
+    },
+    modalColorDot: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      marginRight: 10,
+    },
+    categoryNameCol: {
+      flex: 1,
+    },
+    modalCategoryName: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    modalSystemBadge: {
+      fontSize: 11,
+      color: colors.textMuted,
+      fontStyle: 'italic',
+    },
+    modalEditInputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 6,
+    },
+    modalEditInput: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      fontSize: 13,
+      backgroundColor: colors.background,
+      color: colors.text,
+    },
+    modalRenameButton: {
+      backgroundColor: colors.success,
+      borderRadius: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+    },
+    modalRenameButtonText: {
+      color: '#fff',
+      fontSize: 11,
+      fontWeight: 'bold',
+    },
+    modalCancelRename: {
+      paddingHorizontal: 6,
+    },
+    modalCancelRenameText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    modalRowActions: {
+      flexDirection: 'row',
+      gap: 12,
+      alignItems: 'center',
+    },
+    modalRenameText: {
+      fontSize: 13,
+      color: colors.primary,
+    },
+    modalDeleteText: {
+      fontSize: 13,
+      color: colors.error,
+    },
+    modalDeleteTextConfirm: {
+      fontWeight: '700',
+      fontSize: 11,
+    },
+    modalCloseButton: {
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 14,
+    },
+    modalCloseButtonText: {
+      color: colors.text,
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    // Budget Swatch Styles
+    budgetRow: {
+      paddingLeft: 0,
+      marginTop: 6,
+    },
+    setBudgetLink: {
+      fontSize: 11,
+      color: colors.primary,
+      fontWeight: '600',
+    },
+    budgetDisplayRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    budgetDisplayText: {
+      fontSize: 11,
+      color: colors.textSecondary,
+    },
+    budgetValue: {
+      fontWeight: '700',
+      color: colors.text,
+    },
+    budgetActionEdit: {
+      fontSize: 11,
+      color: colors.primary,
+      textDecorationLine: 'underline',
+    },
+    budgetActionClear: {
+      fontSize: 11,
+      color: colors.error,
+      textDecorationLine: 'underline',
+    },
+    budgetEditInline: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    budgetInput: {
+      width: 90,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      fontSize: 12,
+      backgroundColor: colors.background,
+      color: colors.text,
+    },
+    budgetSaveButton: {
+      backgroundColor: colors.success,
+      borderRadius: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    budgetSaveButtonText: {
+      color: '#fff',
+      fontSize: 11,
+      fontWeight: 'bold',
+    },
+    budgetCancelButton: {
+      backgroundColor: colors.textSecondary,
+      borderRadius: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    budgetCancelButtonText: {
+      color: '#fff',
+      fontSize: 11,
+      fontWeight: 'bold',
+    },
+  });

@@ -4,6 +4,7 @@
 // Created: 2026-07-18
 
 import { ExpenseCategory } from '../config/categories';
+import { TransactionType } from './expense';
 
 export type RecurringInterval = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -16,6 +17,7 @@ export interface RecurringExpense {
   startDate: string; // yyyy-mm-dd
   lastGeneratedDate: string | null; // yyyy-mm-dd
   createdAt: string; // ISO timestamp
+  type?: TransactionType;
 }
 
 export interface NewRecurringInput {
@@ -24,6 +26,7 @@ export interface NewRecurringInput {
   note: string;
   interval: RecurringInterval;
   startDate: string; // yyyy-mm-dd
+  type?: TransactionType;
 }
 
 /** Validates inputs for a recurring schedule. Throws Error if invalid. */

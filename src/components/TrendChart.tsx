@@ -1,17 +1,15 @@
 // src/components/TrendChart.tsx
 // Renders a list of category cards showing rolling 3-month spending trends.
 // Colors are dynamically resolved via the categoryColors lookup prop.
-// Each card displays:
-// 1. The category name and latest month total.
-// 2. A 3-month vertical spark-column viz scaled relative to the global max spending.
-// 3. A localized text history breakdown of the last 3 months.
-// 4. A colored trend badge (green decrease indicator, red increase indicator).
-// Connects to: src/services/trendSummary.ts, src/utils/currency.ts
+// Adapts dynamically to light, dark, and OLED black modes.
+// Connects to: src/services/trendSummary.ts, src/utils/currency.ts,
+// src/components/ThemeProvider.tsx
 // Created: 2026-07-17
 
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CategoryTrend } from '../services/trendSummary';
 import { formatCents } from '../utils/currency';
+import { useTheme } from './ThemeProvider';
 
 interface TrendChartProps {
   trends: CategoryTrend[];
@@ -23,6 +21,9 @@ const BAR_MAX_HEIGHT = 35;
 const MIN_BAR_HEIGHT = 2;
 
 export default function TrendChart({ trends, latestMonthLabel, categoryColors }: TrendChartProps) {
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
+
   if (trends.length === 0) {
     return (
       <View style={styles.emptyState}>
@@ -122,145 +123,148 @@ export default function TrendChart({ trends, latestMonthLabel, categoryColors }:
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 20,
-    marginTop: 2,
-  },
-  emptyState: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    // Premium drop shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f7f7f7',
-    paddingBottom: 10,
-    marginBottom: 10,
-  },
-  categoryName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  latestAmountText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
-  },
-  latestAmount: {
-    fontWeight: '600',
-    color: '#333',
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    minWidth: 50,
-    alignItems: 'center',
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  badgeNeutral: {
-    backgroundColor: '#f5f5f5',
-  },
-  badgeTextNeutral: {
-    color: '#888',
-  },
-  badgeNew: {
-    backgroundColor: '#ebf3ff',
-  },
-  badgeTextNew: {
-    color: '#2f6feb',
-  },
-  badgeWarning: {
-    backgroundColor: '#fdf2f2',
-  },
-  badgeTextWarning: {
-    color: '#e34948',
-  },
-  badgeSuccess: {
-    backgroundColor: '#f0fdf4',
-  },
-  badgeTextSuccess: {
-    color: '#1baf7a',
-  },
-  cardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  historySection: {
-    flex: 1,
-    gap: 4,
-  },
-  historyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  historyLabel: {
-    fontSize: 12,
-    color: '#888',
-    width: 35,
-  },
-  historyValue: {
-    fontSize: 12,
-    color: '#444',
-    fontWeight: '500',
-  },
-  sparkContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    paddingLeft: 16,
-  },
-  sparkCol: {
-    alignItems: 'center',
-    width: 22,
-  },
-  sparkBar: {
-    width: 12,
-    borderRadius: 3,
-  },
-  sparkLabel: {
-    fontSize: 9,
-    color: '#bbb',
-    marginTop: 4,
-    fontWeight: '600',
-  },
-});
+const createStyles = (colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      padding: 16,
+      backgroundColor: colors.background,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: 20,
+      marginTop: 2,
+    },
+    emptyState: {
+      padding: 32,
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    emptyStateText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      // Premium drop shadow
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.2 : 0.05,
+      shadowRadius: 6,
+      elevation: 2,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      paddingBottom: 10,
+      marginBottom: 10,
+    },
+    categoryName: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    latestAmountText: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    latestAmount: {
+      fontWeight: '600',
+      color: colors.text,
+    },
+    badge: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      minWidth: 50,
+      alignItems: 'center',
+    },
+    badgeText: {
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    badgeNeutral: {
+      backgroundColor: colors.surfaceSecondary,
+    },
+    badgeTextNeutral: {
+      color: colors.textSecondary,
+    },
+    badgeNew: {
+      backgroundColor: isDark ? '#142850' : '#ebf3ff',
+    },
+    badgeTextNew: {
+      color: colors.primary,
+    },
+    badgeWarning: {
+      backgroundColor: isDark ? '#3d1616' : '#fdf2f2',
+    },
+    badgeTextWarning: {
+      color: colors.error,
+    },
+    badgeSuccess: {
+      backgroundColor: isDark ? '#143224' : '#f0fdf4',
+    },
+    badgeTextSuccess: {
+      color: colors.success,
+    },
+    cardContent: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+    },
+    historySection: {
+      flex: 1,
+      gap: 4,
+    },
+    historyRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    historyLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      width: 35,
+    },
+    historyValue: {
+      fontSize: 12,
+      color: colors.text,
+      fontWeight: '500',
+    },
+    sparkContainer: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      gap: 8,
+      paddingLeft: 16,
+    },
+    sparkCol: {
+      alignItems: 'center',
+      width: 22,
+    },
+    sparkBar: {
+      width: 12,
+      borderRadius: 3,
+    },
+    sparkLabel: {
+      fontSize: 9,
+      color: colors.textMuted,
+      marginTop: 4,
+      fontWeight: '600',
+    },
+  });

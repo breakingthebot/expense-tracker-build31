@@ -146,6 +146,12 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/screens/HistoryScreen.tsx` launches a file picker overlay Modal with preview lists and confirmation triggers.
 - `src/components/ExpenseList.tsx` adds trigger buttons inside transaction lists and empty ledger views.
 
+### Visual Improvements & Theme Selector (Iteration 18)
+- `src/components/ThemeProvider.tsx` establishes React Context managing theme states and color tokens.
+- `src/services/themeStorage.ts` persists theme preferences ('light' | 'dark' | 'oled') to AsyncStorage.
+- `src/screens/HistoryScreen.tsx` renders emoji theme selectors in the ledger dashboard layout.
+- `src/components/DatePicker.tsx` and `src/components/ScreenStatus.tsx` style indicators and forms dynamically based on themes.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

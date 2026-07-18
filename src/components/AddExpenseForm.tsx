@@ -3,7 +3,7 @@
 // `editingExpense` is passed in. Includes a top segmented toggle between Expense and Income,
 // and a "Repeat this transaction" checkbox for quick-add schedules. Validates input locally.
 // Connects to: src/config/categories.ts, src/utils/currency.ts, src/utils/date.ts,
-// src/models/recurring.ts, src/models/expense.ts, src/screens/AddScreen.tsx
+// src/models/recurring.ts, src/models/expense.ts, src/components/ThemeProvider.tsx
 // Created: 2026-07-12
 
 import { useState } from 'react';
@@ -15,6 +15,7 @@ import { RecurringInterval } from '../models/recurring';
 import { Category } from '../services/categoryStorage';
 import { centsToInputString, parseDollarsToCents } from '../utils/currency';
 import { todayIsoDate } from '../utils/date';
+import { useTheme } from './ThemeProvider';
 
 export interface AddFormSubmitData {
   amountCents: number;
@@ -45,6 +46,8 @@ export default function AddExpenseForm({
   onCancelEdit,
 }: AddExpenseFormProps) {
   const isEditing = editingExpense !== undefined;
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
 
   const [type, setType] = useState<TransactionType>(
     editingExpense?.type ?? 'expense'
@@ -80,167 +83,163 @@ export default function AddExpenseForm({
         category,
         note,
         date,
+        isRecurring,
+        interval: isRecurring ? interval : undefined,
         type,
-        isRecurring: !isEditing && isRecurring,
-        interval: !isEditing && isRecurring ? interval : undefined,
       });
-
       if (!isEditing) {
         setAmountText('');
         setNote('');
-        setIsRecurring(false);
       }
-    } catch (submitError) {
-      const fallback = isEditing ? 'Could not save changes.' : `Could not add ${type}.`;
-      setError(submitError instanceof Error ? submitError.message : fallback);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
     }
   }
 
-  const headingText = isEditing
-    ? type === 'income'
-      ? 'Edit Income'
-      : 'Edit Expense'
-    : type === 'income'
-      ? 'Add Income'
-      : 'Add Expense';
-
-  const submitText = submitting
-    ? 'Saving...'
-    : isEditing
-      ? 'Save Changes'
-      : isRecurring
-        ? 'Schedule Bill'
-        : type === 'income'
-          ? 'Add Income'
-          : 'Add Expense';
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>{headingText}</Text>
+    <View style={styles.card}>
+      <Text style={styles.title}>{isEditing ? 'Edit Transaction' : 'Add Transaction'}</Text>
 
-      {/* Segmented Control Selector between Expense and Income */}
-      <View style={styles.typeSelectorRow}>
+      {/* Segmented control for Expense vs Income */}
+      <View style={styles.segmentedContainer}>
         <TouchableOpacity
-          style={[styles.typeButton, type === 'expense' && styles.typeButtonExpenseActive]}
+          style={[styles.segmentButton, type === 'expense' && styles.segmentButtonActiveExpense]}
           onPress={() => setType('expense')}
           accessibilityRole="button"
-          accessibilityLabel="Expense transaction mode"
+          accessibilityLabel="Transaction Type: Expense"
         >
-          <Text style={[styles.typeButtonText, type === 'expense' && styles.typeButtonTextActive]}>
+          <Text style={[styles.segmentText, type === 'expense' && styles.segmentTextActive]}>
             Expense
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.typeButton, type === 'income' && styles.typeButtonIncomeActive]}
+          style={[styles.segmentButton, type === 'income' && styles.segmentButtonActiveIncome]}
           onPress={() => setType('income')}
           accessibilityRole="button"
-          accessibilityLabel="Income transaction mode"
+          accessibilityLabel="Transaction Type: Income"
         >
-          <Text style={[styles.typeButtonText, type === 'income' && styles.typeButtonTextActive]}>
+          <Text style={[styles.segmentText, type === 'income' && styles.segmentTextActive]}>
             Income
           </Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.label}>Amount</Text>
-      <TextInput
-        style={styles.input}
-        value={amountText}
-        onChangeText={setAmountText}
-        placeholder="0.00"
-        keyboardType="decimal-pad"
-        accessibilityLabel="Transaction amount"
-      />
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
-      <Text style={styles.label}>Category</Text>
-      <View style={styles.chipRow}>
-        {categories.map((option) => (
-          <TouchableOpacity
-            key={option.id}
-            onPress={() => setCategory(option.name)}
-            style={[styles.chip, option.name === category && styles.chipSelected]}
-            accessibilityRole="button"
-            accessibilityState={{ selected: option.name === category }}
-          >
-            <Text style={[styles.chipText, option.name === category && styles.chipTextSelected]}>
-              {option.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      {/* Amount text input field */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Amount ($)</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="decimal-pad"
+          placeholder="0.00"
+          placeholderTextColor={colors.textMuted}
+          value={amountText}
+          onChangeText={setAmountText}
+          editable={!submitting}
+          accessibilityLabel="Transaction amount field"
+        />
       </View>
 
-      <Text style={styles.label}>Date</Text>
-      <DatePicker date={date} onDateChange={setDate} />
+      {/* Note description input field */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Note</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={type === 'income' ? 'e.g. Salary, Refund' : 'e.g. Coffee, Groceries'}
+          placeholderTextColor={colors.textMuted}
+          value={note}
+          onChangeText={setNote}
+          maxLength={200}
+          editable={!submitting}
+          accessibilityLabel="Transaction note field"
+        />
+      </View>
 
-      <Text style={styles.label}>Note {isRecurring ? '' : '(optional)'}</Text>
-      <TextInput
-        style={styles.input}
-        value={note}
-        onChangeText={setNote}
-        placeholder={isRecurring ? `e.g. Monthly ${type === 'income' ? 'Salary' : 'Rent'}` : "What was this for?"}
-        accessibilityLabel="Transaction note"
-      />
+      {/* Category selector grid */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Category</Text>
+        <View style={styles.swatchContainer}>
+          {categories.map((cat) => {
+            const isChosen = category === cat.name;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.swatchOption,
+                  { borderColor: cat.color },
+                  isChosen && { backgroundColor: cat.color },
+                ]}
+                onPress={() => setCategory(cat.name)}
+                disabled={submitting}
+                accessibilityRole="button"
+                accessibilityLabel={`Select category ${cat.name}`}
+              >
+                <Text style={[styles.swatchText, isChosen && styles.swatchTextChosen]}>
+                  {cat.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
 
-      {/* Recurring options (hidden in edit mode) */}
+      {/* Date Picker Component */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Date</Text>
+        <DatePicker date={date} onDateChange={setDate} />
+      </View>
+
+      {/* Quick Recurring schedule template checkbox (hidden in edit mode) */}
       {!isEditing && (
         <View style={styles.recurringSection}>
           <TouchableOpacity
             style={styles.checkboxRow}
             onPress={() => setIsRecurring(!isRecurring)}
+            disabled={submitting}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: isRecurring }}
           >
             <View style={[styles.checkbox, isRecurring && styles.checkboxChecked]}>
               {isRecurring && <Text style={styles.checkboxTick}>✓</Text>}
             </View>
-            <Text style={styles.checkboxLabel}>Repeat this {type}</Text>
+            <Text style={styles.checkboxLabel}>Repeat this transaction</Text>
           </TouchableOpacity>
 
           {isRecurring && (
             <View style={styles.intervalRow}>
-              <Text style={styles.intervalLabel}>Frequency:</Text>
+              <Text style={styles.intervalLabel}>Frequency</Text>
               <View style={styles.frequencyButtons}>
-                {(['daily', 'weekly', 'monthly', 'yearly'] as RecurringInterval[]).map((f) => (
-                  <TouchableOpacity
-                    key={f}
-                    style={[styles.frequencyButton, interval === f && styles.frequencyButtonActive]}
-                    onPress={() => setInterval(f)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: interval === f }}
-                  >
-                    <Text
-                      style={[
-                        styles.frequencyButtonText,
-                        interval === f && styles.frequencyButtonTextActive,
-                      ]}
+                {(['daily', 'weekly', 'monthly'] as const).map((mode) => {
+                  const isActive = interval === mode;
+                  return (
+                    <TouchableOpacity
+                      key={mode}
+                      style={[styles.frequencyButton, isActive && styles.frequencyButtonActive]}
+                      onPress={() => setInterval(mode)}
+                      disabled={submitting}
+                      accessibilityRole="button"
                     >
-                      {f.charAt(0).toUpperCase() + f.slice(1)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.frequencyButtonText,
+                          isActive && styles.frequencyButtonTextActive,
+                        ]}
+                      >
+                        {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           )}
         </View>
       )}
 
-      {error && <Text style={styles.error}>{error}</Text>}
-
-      <View style={styles.actionRow}>
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            submitting && styles.submitButtonDisabled,
-            !submitting && type === 'income' && styles.submitButtonIncome,
-          ]}
-          onPress={handleSubmit}
-          disabled={submitting}
-          accessibilityRole="button"
-        >
-          <Text style={styles.submitButtonText}>{submitText}</Text>
-        </TouchableOpacity>
-
-        {isEditing && (
+      {/* Submit Actions */}
+      <View style={styles.actions}>
+        {isEditing && onCancelEdit && (
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={onCancelEdit}
@@ -250,204 +249,221 @@ export default function AddExpenseForm({
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
         )}
+        <TouchableOpacity
+          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={submitting}
+          accessibilityRole="button"
+        >
+          <Text style={styles.submitButtonText}>
+            {submitting ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Record'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e2e2',
-  },
-  heading: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#222',
-    marginBottom: 12,
-  },
-  typeSelectorRow: {
-    flexDirection: 'row',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 3,
-    marginBottom: 14,
-  },
-  typeButton: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  typeButtonExpenseActive: {
-    backgroundColor: '#333',
-  },
-  typeButtonIncomeActive: {
-    backgroundColor: '#1baf7a',
-  },
-  typeButtonText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '600',
-  },
-  typeButtonTextActive: {
-    color: '#fff',
-  },
-  label: {
-    fontSize: 13,
-    color: '#555',
-    marginBottom: 4,
-    marginTop: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: '#0b0b0b',
-    backgroundColor: '#fff',
-    marginBottom: 8,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#fff',
-  },
-  chipSelected: {
-    borderColor: '#2f6feb',
-    backgroundColor: '#2f6feb',
-  },
-  chipText: {
-    fontSize: 13,
-    color: '#52514e',
-  },
-  chipTextSelected: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  error: {
-    color: '#c0392b',
-    marginTop: 8,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 16,
-  },
-  submitButton: {
-    flex: 1,
-    backgroundColor: '#2f6feb',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  submitButtonIncome: {
-    backgroundColor: '#1baf7a',
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  cancelButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    color: '#333',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  recurringSection: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 8,
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 2,
-    borderColor: '#888',
-    borderRadius: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-  },
-  checkboxChecked: {
-    borderColor: '#2f6feb',
-    backgroundColor: '#2f6feb',
-  },
-  checkboxTick: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  checkboxLabel: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
-  },
-  intervalRow: {
-    marginTop: 12,
-  },
-  intervalLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 6,
-  },
-  frequencyButtons: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  frequencyButton: {
-    flex: 1,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  frequencyButtonActive: {
-    borderColor: '#2f6feb',
-    backgroundColor: '#ebf3ff',
-  },
-  frequencyButtonText: {
-    fontSize: 11,
-    color: '#555',
-    fontWeight: '500',
-  },
-  frequencyButtonTextActive: {
-    color: '#2f6feb',
-    fontWeight: '600',
-  },
-});
+const createStyles = (colors: any, isDark: boolean) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: 16,
+      margin: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.25 : 0.08,
+      shadowRadius: 8,
+      elevation: 2,
+      borderWidth: isDark ? 1 : 0,
+      borderColor: colors.border,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 16,
+    },
+    segmentedContainer: {
+      flexDirection: 'row',
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 8,
+      padding: 3,
+      marginBottom: 16,
+    },
+    segmentButton: {
+      flex: 1,
+      paddingVertical: 10,
+      borderRadius: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    segmentButtonActiveExpense: {
+      backgroundColor: colors.primary,
+    },
+    segmentButtonActiveIncome: {
+      backgroundColor: colors.success,
+    },
+    segmentText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    segmentTextActive: {
+      color: '#fff',
+    },
+    errorText: {
+      color: colors.error,
+      fontSize: 13,
+      marginBottom: 12,
+      fontWeight: '500',
+    },
+    field: {
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: 6,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 15,
+      backgroundColor: colors.background,
+      color: colors.text,
+    },
+    swatchContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 2,
+    },
+    swatchOption: {
+      borderWidth: 1.5,
+      borderRadius: 18,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    swatchText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    swatchTextChosen: {
+      color: '#fff',
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 8,
+    },
+    submitButton: {
+      flex: 1,
+      backgroundColor: colors.primary,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    submitButtonDisabled: {
+      opacity: 0.6,
+    },
+    submitButtonText: {
+      color: '#fff',
+      fontWeight: '600',
+      fontSize: 16,
+    },
+    cancelButton: {
+      flex: 0.5,
+      paddingVertical: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      backgroundColor: colors.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cancelButtonText: {
+      color: colors.text,
+      fontWeight: '600',
+      fontSize: 16,
+    },
+    recurringSection: {
+      marginTop: 12,
+      padding: 12,
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: 8,
+    },
+    checkboxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    checkbox: {
+      width: 20,
+      height: 20,
+      borderWidth: 2,
+      borderColor: colors.textSecondary,
+      borderRadius: 4,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.background,
+    },
+    checkboxChecked: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primary,
+    },
+    checkboxTick: {
+      color: '#fff',
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    checkboxLabel: {
+      fontSize: 14,
+      color: colors.text,
+      fontWeight: '500',
+    },
+    intervalRow: {
+      marginTop: 12,
+    },
+    intervalLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginBottom: 6,
+    },
+    frequencyButtons: {
+      flexDirection: 'row',
+      gap: 6,
+    },
+    frequencyButton: {
+      flex: 1,
+      paddingVertical: 6,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 6,
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    frequencyButtonActive: {
+      borderColor: colors.primary,
+      backgroundColor: isDark ? '#142850' : '#ebf3ff',
+    },
+    frequencyButtonText: {
+      fontSize: 11,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    frequencyButtonTextActive: {
+      color: colors.primary,
+      fontWeight: '600',
+    },
+  });

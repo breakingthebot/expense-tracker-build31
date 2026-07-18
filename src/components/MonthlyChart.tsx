@@ -5,12 +5,14 @@
 // Colors and budget goals are passed dynamically.
 // Displays progress metrics and warning flags inline below the bar tracks
 // if a monthly category budget goal has been configured.
-// Connects to: src/services/monthlySummary.ts, src/utils/currency.ts, src/screens/ChartScreen.tsx
+// Connects to: src/services/monthlySummary.ts, src/utils/currency.ts,
+// src/components/ThemeProvider.tsx
 // Created: 2026-07-12
 
 import { StyleSheet, Text, View } from 'react-native';
 import { MonthlySummary } from '../services/monthlySummary';
 import { formatCents } from '../utils/currency';
+import { useTheme } from './ThemeProvider';
 
 interface MonthlyChartProps {
   summary: MonthlySummary;
@@ -20,6 +22,8 @@ interface MonthlyChartProps {
 
 /** Renders the monthly category breakdown chart with budget progress warnings. */
 export default function MonthlyChart({ summary, categoryColors, budgetGoals }: MonthlyChartProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const maxCents = summary.categoryTotals[0]?.totalCents ?? 0;
 
   if (summary.categoryTotals.length === 0) {
@@ -55,7 +59,7 @@ export default function MonthlyChart({ summary, categoryColors, budgetGoals }: M
                       styles.bar,
                       {
                         width: `${widthPercent}%`,
-                        backgroundColor: isOverBudget ? '#ef4444' : barColor, // Change to alert color if over budget
+                        backgroundColor: isOverBudget ? colors.error : barColor, // Change to alert color if over budget
                       },
                     ]}
                   />
@@ -85,77 +89,83 @@ const CATEGORY_LABEL_WIDTH = 100;
 const VALUE_LABEL_WIDTH = 68;
 const BAR_HEIGHT = 16;
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  totalValue: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#333',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  totalCaption: {
-    fontSize: 13,
-    color: '#888',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  rows: {
-    gap: 16,
-  },
-  rowContainer: {
-    flexDirection: 'column',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  categoryLabel: {
-    width: CATEGORY_LABEL_WIDTH,
-    fontSize: 13,
-    color: '#555',
-  },
-  barTrack: {
-    flex: 1,
-    height: BAR_HEIGHT,
-    justifyContent: 'center',
-  },
-  bar: {
-    height: BAR_HEIGHT,
-    borderTopRightRadius: 4,
-    borderBottomRightRadius: 4,
-    minWidth: 3,
-  },
-  valueLabel: {
-    width: VALUE_LABEL_WIDTH,
-    textAlign: 'right',
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#333',
-  },
-  emptyState: {
-    paddingVertical: 48,
-    alignItems: 'center',
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-  },
-  // Budget progress labels styled under bar track
-  budgetRow: {
-    marginLeft: CATEGORY_LABEL_WIDTH,
-    marginTop: 4,
-  },
-  budgetText: {
-    fontSize: 11,
-    color: '#666',
-    fontWeight: '500',
-  },
-  budgetWarningText: {
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-});
+const createStyles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      padding: 16,
+      backgroundColor: colors.background,
+    },
+    totalValue: {
+      fontSize: 32,
+      fontWeight: '700',
+      color: colors.text,
+      marginTop: 8,
+      textAlign: 'center',
+    },
+    totalCaption: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    rows: {
+      gap: 16,
+    },
+    rowContainer: {
+      flexDirection: 'column',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    categoryLabel: {
+      width: CATEGORY_LABEL_WIDTH,
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    barTrack: {
+      flex: 1,
+      height: BAR_HEIGHT,
+      justifyContent: 'center',
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 4,
+      overflow: 'hidden',
+    },
+    bar: {
+      height: BAR_HEIGHT,
+      borderTopRightRadius: 4,
+      borderBottomRightRadius: 4,
+      minWidth: 3,
+    },
+    valueLabel: {
+      width: VALUE_LABEL_WIDTH,
+      textAlign: 'right',
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    emptyState: {
+      paddingVertical: 48,
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    emptyStateText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    // Budget progress labels styled under bar track
+    budgetRow: {
+      marginLeft: CATEGORY_LABEL_WIDTH,
+      marginTop: 4,
+    },
+    budgetText: {
+      fontSize: 11,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    budgetWarningText: {
+      color: colors.error,
+      fontWeight: '600',
+    },
+  });

@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.18.0] - 2026-07-18
+### Added
+- Visual Improvements & Theme Selector. Implemented [ThemeProvider.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ThemeProvider.tsx) exporting a react navigation styling context.
+- Light, Dark, and OLED Black color palettes dynamically rendering text, inputs, cards, borders, and loaders.
+- Sleek emoji theme toggle selector buttons (☀️, 🌙, 🕶️) at the top of the ledger dashboard.
+- Dynamic Status Bar styling updates based on active themes.
+- 3 new unit tests in [themeStorage.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/themeStorage.test.ts) (86 tests total).
+
+### Changed
+- Integrated [themeStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/themeStorage.ts) persisting theme mode selections to AsyncStorage.
+- Refactored [App.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/App.tsx) bottom navigation tab styling.
+- Adapted [AddScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/AddScreen.tsx), [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx), and [ChartScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ChartScreen.tsx) containers to scale theme background colors dynamically.
+- Refactored components [AddExpenseForm.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/AddExpenseForm.tsx), [ExpenseList.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ExpenseList.tsx), [MonthlyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/MonthlyChart.tsx), [TrendChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/TrendChart.tsx), [DatePicker.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.tsx), and [ScreenStatus.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ScreenStatus.tsx) to hook into `useTheme()`.
+- Expanded recurring models in [recurring.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/models/recurring.ts) and generator in [recurringGenerator.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/recurringGenerator.ts) to support transaction types.
+
 ## [0.17.0] - 2026-07-18
 ### Added
 - CSV Data Import feature. Created [csvParser.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/utils/csvParser.ts) parsing RFC 4180 strings and quote-enclosed cells.
