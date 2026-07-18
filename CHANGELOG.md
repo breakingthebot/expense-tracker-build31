@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.21.0] - 2026-07-18
+### Added
+- Cash Flow Forecaster. Created [forecaster.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/forecaster.ts) service simulating upcoming cash flow events and estimating balances for any future date.
+- Sleek interactive forecast card widget inside [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx) containing collapsible upcoming transaction scrolling lists and target date picks.
+- Date math helper `addDaysToIso` in [date.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/utils/date.ts).
+- Unit tests in [forecaster.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/forecaster.test.ts) (87 unit tests total).
+
 ## [0.20.0] - 2026-07-18
 ### Added
 - Future Date Selection. Removed the calendar `maximumDate={new Date()}` boundary constraint in [DatePicker.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.tsx), enabling future forecasting and advance bill scheduling.

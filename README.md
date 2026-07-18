@@ -162,6 +162,11 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/DatePicker.tsx` removes the `maximumDate` constraint, enabling the user to enter future dates for bills and projections.
 - `src/services/expenseStorage.ts` maps the transaction `type` parameter properly on creations and updates, ensuring income logs correctly persist as income.
 
+### Cash Flow Forecaster (Iteration 21)
+- `src/services/forecaster.ts` simulates upcoming cash flows (including manual future entries and template recurrence instance offsets) up to any user-selected date.
+- `src/screens/HistoryScreen.tsx` embeds the forecast interface card with custom date inputs, collapsible projection scrolling lists, and live balance counters.
+- `src/utils/date.ts` introduces `addDaysToIso` to handle calendar day calculations cleanly.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

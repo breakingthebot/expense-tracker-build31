@@ -23,23 +23,38 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import ExpenseList from '../components/ExpenseList';
 import ScreenStatus from '../components/ScreenStatus';
+import DatePicker from '../components/DatePicker';
 import { ExpenseCategory } from '../config/categories';
 import { useExpenses } from '../hooks/useExpenses';
 import { Expense } from '../models/expense';
 import { exportExpensesToCsv } from '../services/expenseExport';
 import { validateCsvImport, ValidationResult } from '../services/csvImport';
+import { forecastBalance } from '../services/forecaster';
 import { formatCents } from '../utils/currency';
 import { logger } from '../utils/logger';
 import { useTheme } from '../components/ThemeProvider';
+import { addDaysToIso, todayIsoDate } from '../utils/date';
 
 const SCOPE = 'HistoryScreen';
 
 export default function HistoryScreen() {
   const navigation = useNavigation<any>();
-  const { expenses, loading, loadError, removeExpense, categories, importTransactions } = useExpenses();
+  const {
+    expenses,
+    recurringSchedules,
+    loading,
+    loadError,
+    removeExpense,
+    categories,
+    importTransactions,
+  } = useExpenses();
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | null>(null);
+
+  // Future Forecast States
+  const [forecastDate, setForecastDate] = useState(addDaysToIso(todayIsoDate(), 30));
+  const [showForecastDetails, setShowForecastDetails] = useState(false);
 
   // Theme states
   const { theme, colors, changeTheme, isDark } = useTheme();
@@ -51,6 +66,10 @@ export default function HistoryScreen() {
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<any>(null);
+
+  const forecastResult = useMemo(() => {
+    return forecastBalance(expenses, recurringSchedules, forecastDate, todayIsoDate());
+  }, [expenses, recurringSchedules, forecastDate]);
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) => {
@@ -236,6 +255,72 @@ export default function HistoryScreen() {
               {netBalanceCents >= 0 ? '' : '-'}{formatCents(Math.abs(netBalanceCents))}
             </Text>
           </View>
+        </View>
+      )}
+
+      {/* 🔮 Future Forecast Calculator Card */}
+      {!loading && !loadError && (
+        <View style={styles.forecastCard}>
+          <View style={styles.forecastHeader}>
+            <Text style={styles.forecastTitle}>🔮 Cash Flow Forecaster</Text>
+            <TouchableOpacity
+              onPress={() => setShowForecastDetails(!showForecastDetails)}
+              accessibilityRole="button"
+              accessibilityLabel="Toggle forecast details"
+            >
+              <Text style={styles.forecastToggleText}>
+                {showForecastDetails ? 'Hide Details' : 'Show Details'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.forecastControlRow}>
+            <Text style={styles.forecastLabel}>Target Future Date:</Text>
+            <DatePicker date={forecastDate} onDateChange={setForecastDate} />
+          </View>
+
+          <View style={styles.forecastResultRow}>
+            <Text style={styles.forecastResultLabel}>Projected Balance:</Text>
+            <Text
+              style={[
+                styles.forecastResultValue,
+                forecastResult.projectedBalanceCents > 0 && styles.forecastResultPositive,
+                forecastResult.projectedBalanceCents < 0 && styles.forecastResultNegative,
+              ]}
+            >
+              {forecastResult.projectedBalanceCents >= 0 ? '' : '-'}{formatCents(Math.abs(forecastResult.projectedBalanceCents))}
+            </Text>
+          </View>
+
+          {showForecastDetails && (
+            <View style={styles.forecastDetailsContainer}>
+              <Text style={styles.forecastSectionHeader}>Upcoming Forecasted Cash Flows</Text>
+              {forecastResult.items.length === 0 ? (
+                <Text style={styles.forecastEmptyText}>No bills or income scheduled before this date.</Text>
+              ) : (
+                <ScrollView style={styles.forecastScroll} nestedScrollEnabled={true}>
+                  {forecastResult.items.map((item) => (
+                    <View key={item.id} style={styles.forecastItemRow}>
+                      <View style={styles.forecastItemLeft}>
+                        <Text style={styles.forecastItemDate}>{item.date}</Text>
+                        <Text style={styles.forecastItemNote} numberOfLines={1}>
+                          {item.note} {item.isSimulated && <Text style={styles.forecastSimBadge}>(recurring)</Text>}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.forecastItemAmount,
+                          item.type === 'income' ? styles.forecastItemAmountIncome : styles.forecastItemAmountExpense,
+                        ]}
+                      >
+                        {item.type === 'income' ? '+' : '-'}{formatCents(item.amountCents)}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          )}
         </View>
       )}
 
@@ -843,5 +928,131 @@ const createStyles = (colors: any, isDark: boolean) =>
       color: colors.text,
       fontWeight: '600',
       fontSize: 14,
+    },
+    forecastCard: {
+      marginHorizontal: 16,
+      marginTop: 14,
+      marginBottom: 6,
+      padding: 16,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: isDark ? 0.2 : 0.05,
+      shadowRadius: 3,
+      elevation: 2,
+    },
+    forecastHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    forecastTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    forecastToggleText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.primary,
+    },
+    forecastControlRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    forecastLabel: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    forecastResultRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderTopWidth: 1,
+      borderTopColor: colors.borderSecondary,
+      paddingTop: 10,
+    },
+    forecastResultLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    forecastResultValue: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    forecastResultPositive: {
+      color: colors.success,
+    },
+    forecastResultNegative: {
+      color: colors.error,
+    },
+    forecastDetailsContainer: {
+      marginTop: 14,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.borderSecondary,
+    },
+    forecastSectionHeader: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 8,
+    },
+    forecastScroll: {
+      maxHeight: 150,
+    },
+    forecastEmptyText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      textAlign: 'center',
+      paddingVertical: 12,
+    },
+    forecastItemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderSecondary,
+    },
+    forecastItemLeft: {
+      flex: 1,
+      marginRight: 10,
+    },
+    forecastItemDate: {
+      fontSize: 10,
+      color: colors.textMuted,
+      fontWeight: '600',
+    },
+    forecastItemNote: {
+      fontSize: 12,
+      color: colors.text,
+      marginTop: 2,
+    },
+    forecastSimBadge: {
+      fontSize: 10,
+      fontStyle: 'italic',
+      color: colors.textSecondary,
+    },
+    forecastItemAmount: {
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    forecastItemAmountIncome: {
+      color: colors.success,
+    },
+    forecastItemAmountExpense: {
+      color: colors.text,
     },
   });

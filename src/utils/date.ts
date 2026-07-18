@@ -49,3 +49,10 @@ export function shiftMonthKey(monthKey: string, deltaMonths: number): string {
   const shiftedMonth = String(shifted.getMonth() + 1).padStart(2, '0');
   return `${shiftedYear}-${shiftedMonth}`;
 }
+
+/** Shifts a yyyy-mm-dd date string by `days` (negative to go back). */
+export function addDaysToIso(isoDate: string, days: number): string {
+  const d = parseIsoDate(isoDate);
+  d.setDate(d.getDate() + days);
+  return toIsoDate(d);
+}
