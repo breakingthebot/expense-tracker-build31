@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.31.0] - 2026-07-18
+### Added
+- Category Budget Goal Quick-Edit. Refactored [MonthlyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/MonthlyChart.tsx) to turn the spending category row gauges into interactive touch triggers displaying a "Tap to set monthly budget goal" helper.
+- Built a premium quick-edit overlay modal in [ChartScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ChartScreen.tsx) with validation logic, enabling users to add, update, or remove budget limits directly by tapping category indicator bars on the Charts tab.
+
 ## [0.30.0] - 2026-07-18
 ### Fixed
 - Web Date Picker future dates limitation. Removed `max` input date constraint from [DatePicker.web.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.web.tsx) allowing users to select any future dates on web browsers to plan, log, and forecast future bills and incomes.

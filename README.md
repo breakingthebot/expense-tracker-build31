@@ -205,6 +205,10 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 ### Future Date Picker Selection (Iteration 30)
 - `src/components/DatePicker.web.tsx` removes the `max` date attribute constraint, enabling web users to select any future dates and log future-dated bills/incomes.
 
+### Category Budget Goal Quick-Edit (Iteration 31)
+- `src/components/MonthlyChart.tsx` transforms category rows into touch triggers with setting guide link helpers.
+- `src/screens/ChartScreen.tsx` embeds the custom Budget Goal Edit Modal with text fields and clean action buttons, binding triggers to update budget limits instantly.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

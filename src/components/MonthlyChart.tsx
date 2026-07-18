@@ -7,7 +7,7 @@
 // src/components/ThemeProvider.tsx
 // Created: 2026-07-12
 
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MonthlySummary } from '../services/monthlySummary';
 import { formatCents } from '../utils/currency';
 import { useTheme } from './ThemeProvider';
@@ -18,6 +18,7 @@ interface MonthlyChartProps {
   categoryColors: Record<string, string>;
   budgetGoals: Record<string, number>;
   chartType?: TransactionType;
+  onBudgetPress?: (category: string) => void;
 }
 
 /** Renders the monthly category breakdown chart with budget progress warnings. */
@@ -26,6 +27,7 @@ export default function MonthlyChart({
   categoryColors,
   budgetGoals,
   chartType = 'expense',
+  onBudgetPress,
 }: MonthlyChartProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -68,7 +70,14 @@ export default function MonthlyChart({
           const pct = budgetGoalCents > 0 ? Math.round((entry.totalCents / budgetGoalCents) * 100) : 0;
 
           return (
-            <View key={entry.category} style={styles.rowContainer}>
+            <TouchableOpacity
+              key={entry.category}
+              style={styles.rowContainer}
+              onPress={() => onBudgetPress?.(entry.category)}
+              disabled={chartType !== 'expense' || !onBudgetPress}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit budget goal for ${entry.category}`}
+            >
               <View style={styles.row}>
                 <Text style={styles.categoryLabel} numberOfLines={1}>
                   {entry.category}
@@ -94,7 +103,7 @@ export default function MonthlyChart({
               </View>
 
               {/* Dynamic Budget Progress Row below the gauge */}
-              {budgetGoalCents > 0 && (
+              {isBudgetGauge ? (
                 <View style={styles.budgetRow}>
                   <Text style={[styles.budgetText, isOverBudget && styles.budgetWarningText]}>
                     {isOverBudget
@@ -102,8 +111,14 @@ export default function MonthlyChart({
                       : `${formatCents(entry.totalCents)} spent of ${formatCents(budgetGoalCents)} budget (${pct}%)`}
                   </Text>
                 </View>
+              ) : (
+                chartType === 'expense' && (
+                  <View style={styles.budgetRow}>
+                    <Text style={styles.setBudgetLink}>Tap to set monthly budget goal</Text>
+                  </View>
+                )
               )}
-            </View>
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -204,5 +219,11 @@ const createStyles = (colors: any) =>
     budgetWarningText: {
       color: colors.error,
       fontWeight: '600',
+    },
+    setBudgetLink: {
+      fontSize: 11,
+      color: colors.primary,
+      fontWeight: '500',
+      textDecorationLine: 'underline',
     },
   });

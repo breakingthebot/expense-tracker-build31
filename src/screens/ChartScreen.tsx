@@ -9,7 +9,7 @@
 // Created: 2026-07-12
 
 import { useMemo, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MonthlyChart from '../components/MonthlyChart';
 import WeeklyChart from '../components/WeeklyChart';
 import TrendChart from '../components/TrendChart';
@@ -27,11 +27,43 @@ export default function ChartScreen() {
     budgetGoals,
     defaultTxType,
     setDefaultTxType,
+    updateBudgetGoal,
     loading,
     loadError,
   } = useExpenses();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
   const [viewMode, setViewMode] = useState<'monthly' | 'weekly' | 'trend'>('monthly');
+
+  // Budget Edit Modal States
+  const [budgetModalVisible, setBudgetModalVisible] = useState(false);
+  const [activeBudgetCategory, setActiveBudgetCategory] = useState<string | null>(null);
+  const [budgetInputValue, setBudgetInputValue] = useState('');
+
+  function handleOpenBudgetEdit(category: string) {
+    setActiveBudgetCategory(category);
+    const existingLimitCents = budgetGoals[category] ?? 0;
+    if (existingLimitCents > 0) {
+      setBudgetInputValue((existingLimitCents / 100).toString());
+    } else {
+      setBudgetInputValue('');
+    }
+    setBudgetModalVisible(true);
+  }
+
+  async function handleSaveBudgetGoal() {
+    if (!activeBudgetCategory) return;
+    const dollars = parseFloat(budgetInputValue.trim());
+    const limitCents = isNaN(dollars) || dollars <= 0 ? 0 : Math.round(dollars * 100);
+
+    try {
+      await updateBudgetGoal(activeBudgetCategory, limitCents);
+      setBudgetModalVisible(false);
+      setActiveBudgetCategory(null);
+      setBudgetInputValue('');
+    } catch (err) {
+      // Handled in storage logic
+    }
+  }
 
   // Theme support
   const { colors, isDark } = useTheme();
@@ -169,6 +201,7 @@ export default function ChartScreen() {
               categoryColors={categoryColors}
               budgetGoals={budgetGoals}
               chartType={defaultTxType}
+              onBudgetPress={handleOpenBudgetEdit}
             />
           )}
           {viewMode === 'weekly' && (
@@ -186,6 +219,67 @@ export default function ChartScreen() {
           )}
         </>
       )}
+
+      {/* Budget Goal Edit Modal */}
+      <Modal
+        visible={budgetModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setBudgetModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Monthly Budget Goal</Text>
+            <Text style={styles.modalSubtitle}>
+              Set a monthly spending limit for <Text style={styles.modalCategoryHighlight}>{activeBudgetCategory}</Text>
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.currencySymbol}>$</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="0.00"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="decimal-pad"
+                value={budgetInputValue}
+                onChangeText={setBudgetInputValue}
+                autoFocus={true}
+                accessibilityLabel="Budget amount in dollars"
+              />
+            </View>
+            
+            <Text style={styles.inputHint}>
+              Enter the limit in dollars. Enter 0 or leave blank to remove the budget goal.
+            </Text>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => {
+                  setBudgetModalVisible(false);
+                  setActiveBudgetCategory(null);
+                  setBudgetInputValue('');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel editing budget"
+              >
+                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSave]}
+                onPress={handleSaveBudgetGoal}
+                accessibilityRole="button"
+                accessibilityLabel="Save budget limit"
+              >
+                <Text style={styles.modalButtonTextSave}>Save Limit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -283,5 +377,103 @@ const createStyles = (colors: any, isDark: boolean) =>
     toggleTextActive: {
       fontWeight: '600',
       color: colors.primary,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    modalContent: {
+      width: '100%',
+      maxWidth: 420,
+      backgroundColor: colors.background,
+      borderRadius: 16,
+      padding: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.4 : 0.15,
+      shadowRadius: 12,
+      elevation: 5,
+      borderWidth: isDark ? 1 : 0,
+      borderColor: colors.borderSecondary,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    modalSubtitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    modalCategoryHighlight: {
+      fontWeight: '600',
+      color: colors.primary,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      backgroundColor: colors.surfaceSecondary,
+      marginBottom: 8,
+      height: 48,
+    },
+    currencySymbol: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginRight: 8,
+    },
+    textInput: {
+      flex: 1,
+      fontSize: 16,
+      color: colors.text,
+      height: '100%',
+      padding: 0,
+    },
+    inputHint: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: 24,
+      lineHeight: 16,
+    },
+    modalActions: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    modalButton: {
+      flex: 1,
+      height: 44,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalButtonCancel: {
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+    },
+    modalButtonSave: {
+      backgroundColor: colors.primary,
+    },
+    modalButtonTextCancel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    modalButtonTextSave: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#fff',
     },
   });
