@@ -37,7 +37,8 @@ npm run typecheck  # check types with tsc
 ```
 
 ## Deployed
-Not deployed anywhere yet — run locally via Expo Go as described above.
+The application is deployed on Vercel as a mobile-friendly web app at:
+[https://expense-tracker-build31.vercel.app](https://expense-tracker-build31.vercel.app)
 
 ## Data Handling
 - All expense data (amount, category, note, date) is stored only on the device, using AsyncStorage. Nothing is sent to a server.
@@ -108,6 +109,11 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/TrendChart.tsx` renders a visual category list where each category has a 3-month vertical column sparkline scaled relative to the global maximum spent in the period (descending opacities represent temporal distance), short history labels, and color-coded percentage change indicators (green decrease, red increase, grey neutral, blue new).
 - `src/screens/ChartScreen.tsx` was refactored: pulled the month navigation arrows to the screen level (fixed at the top), added a custom segmented control toggle, and conditionally renders `MonthlyChart` or `TrendChart`.
 - `src/components/MonthlyChart.tsx` was simplified to remove its internal month navigation block.
+
+### Vercel Deployment & Web Compatibility (Iteration 12)
+- Added web platform support by installing `react-native-web`, `react-dom`, and `@expo/metro-runtime`.
+- Created platform-specific split date pickers: [DatePicker.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.tsx) for iOS/Android native `@react-native-community/datetimepicker` integrations, and [DatePicker.web.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.web.tsx) using the standard HTML5 `<input type="date">` for web compatibility.
+- Integrated the Vercel builder using `vercel.json` and a package `"build"` script executing `expo export --platform web` to publish to the `dist/` directory automatically.
 
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest

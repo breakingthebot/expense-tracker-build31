@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.12.0] - 2026-07-18
+### Added
+- Platform-split date picking components: [DatePicker.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.tsx) (native iOS/Android datetimepicker) and [DatePicker.web.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.web.tsx) (HTML5 date input for web compatibility).
+- Web dependencies: `react-native-web`, `react-dom`, and `@expo/metro-runtime` to enable Expo web compilation.
+- Vercel configuration: [vercel.json](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/vercel.json) and [.vercelignore](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/.vercelignore) for static deployments.
+- Package `"build"` script executing `expo export --platform web`.
+
+### Changed
+- [AddExpenseForm.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/AddExpenseForm.tsx) refactored to use the platform-split `DatePicker` component, resolving web compatibility runtime crashes.
+
 ## [0.11.0] - 2026-07-17
 ### Added
 - Rolling 3-month spending trends calculation service under [trendSummary.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/trendSummary.ts).

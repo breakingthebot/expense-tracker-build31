@@ -9,14 +9,12 @@
 // Created: 2026-07-12
 
 import { useState } from 'react';
-import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import DatePicker from './DatePicker';
 import { EXPENSE_CATEGORIES, ExpenseCategory } from '../config/categories';
 import { Expense, NewExpenseInput } from '../models/expense';
 import { centsToInputString, parseDollarsToCents } from '../utils/currency';
-import { formatDisplayDate, parseIsoDate, todayIsoDate, toIsoDate } from '../utils/date';
+import { todayIsoDate } from '../utils/date';
 
 interface AddExpenseFormProps {
   onSubmit: (input: NewExpenseInput) => Promise<void>;
@@ -43,17 +41,7 @@ export default function AddExpenseForm({
   );
   const [note, setNote] = useState(editingExpense?.note ?? '');
   const [date, setDate] = useState(editingExpense?.date ?? todayIsoDate());
-  const [showAndroidPicker, setShowAndroidPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  function handleDateChange(event: DateTimePickerEvent, selectedDate?: Date) {
-    if (Platform.OS === 'android') {
-      setShowAndroidPicker(false);
-    }
-    if (event.type === 'set' && selectedDate) {
-      setDate(toIsoDate(selectedDate));
-    }
-  }
 
   async function handleSubmit() {
     const amountCents = parseDollarsToCents(amountText);
@@ -107,37 +95,7 @@ export default function AddExpenseForm({
       </View>
 
       <Text style={styles.label}>Date</Text>
-      {Platform.OS === 'ios' ? (
-        <DateTimePicker
-          value={parseIsoDate(date)}
-          mode="date"
-          display="compact"
-          maximumDate={new Date()}
-          onChange={handleDateChange}
-          style={styles.iosDatePicker}
-          accessibilityLabel="Expense date"
-        />
-      ) : (
-        <>
-          <TouchableOpacity
-            style={styles.dateButton}
-            onPress={() => setShowAndroidPicker(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Expense date"
-          >
-            <Text style={styles.dateButtonText}>{formatDisplayDate(date)}</Text>
-          </TouchableOpacity>
-          {showAndroidPicker && (
-            <DateTimePicker
-              value={parseIsoDate(date)}
-              mode="date"
-              display="default"
-              maximumDate={new Date()}
-              onChange={handleDateChange}
-            />
-          )}
-        </>
-      )}
+      <DatePicker date={date} onDateChange={setDate} />
 
       <Text style={styles.label}>Note (optional)</Text>
       <TextInput

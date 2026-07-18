@@ -1,11 +1,8 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
 # dependencies
 node_modules/
 
 # Expo
 .expo/
-dist/
 web-build/
 expo-env.d.ts
 
@@ -44,10 +41,8 @@ yarn-error.*
 # coverage
 coverage/
 
-# Local-only project files (not part of the pushed repo)
+# Local-only project files
 AGENTS.md
 claude.md
 BUILD_NOTES.md
 .claude/
-
-.vercel
