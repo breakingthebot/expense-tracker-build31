@@ -69,6 +69,7 @@ export interface WeeklyTotal {
   totalCents: number;
   startDate: string;
   endDate: string;
+  dailyCents: number[]; // Sparkline daily totals
 }
 
 export interface MonthlyWeeklySummary {
@@ -83,11 +84,11 @@ export function summarizeWeeks(
   typePreference: TransactionType = 'expense'
 ): MonthlyWeeklySummary {
   const weekBuckets = [
-    { label: 'Week 1', start: 1, end: 7, totalCents: 0 },
-    { label: 'Week 2', start: 8, end: 14, totalCents: 0 },
-    { label: 'Week 3', start: 15, end: 21, totalCents: 0 },
-    { label: 'Week 4', start: 22, end: 28, totalCents: 0 },
-    { label: 'Week 5', start: 29, end: 31, totalCents: 0 },
+    { label: 'Week 1', start: 1, end: 7, totalCents: 0, dailyCents: Array(7).fill(0) },
+    { label: 'Week 2', start: 8, end: 14, totalCents: 0, dailyCents: Array(7).fill(0) },
+    { label: 'Week 3', start: 15, end: 21, totalCents: 0, dailyCents: Array(7).fill(0) },
+    { label: 'Week 4', start: 22, end: 28, totalCents: 0, dailyCents: Array(7).fill(0) },
+    { label: 'Week 5', start: 29, end: 31, totalCents: 0, dailyCents: Array(3).fill(0) },
   ];
 
   for (const expense of expenses) {
@@ -102,6 +103,7 @@ export function summarizeWeeks(
     for (const bucket of weekBuckets) {
       if (day >= bucket.start && day <= bucket.end) {
         bucket.totalCents += expense.amountCents;
+        bucket.dailyCents[day - bucket.start] += expense.amountCents;
         break;
       }
     }
@@ -112,6 +114,7 @@ export function summarizeWeeks(
     totalCents: b.totalCents,
     startDate: `${monthKey}-${String(b.start).padStart(2, '0')}`,
     endDate: `${monthKey}-${String(b.end).padStart(2, '0')}`,
+    dailyCents: b.dailyCents,
   }));
 
   const totalCents = weeklyTotals.reduce((sum, wt) => sum + wt.totalCents, 0);

@@ -107,6 +107,28 @@ export default function WeeklyChart({
                   {rangeLabel.length > 0 && <Text style={styles.rangeLabel}>{rangeLabel}</Text>}
                 </View>
 
+                {/* Daily Spending Sparkline Trend */}
+                <View style={styles.sparklineCol}>
+                  {entry.dailyCents.map((c, idx) => {
+                    const maxDayCents = Math.max(...entry.dailyCents, 0);
+                    const heightPercent = maxDayCents === 0 ? 0 : (c / maxDayCents) * 100;
+
+                    return (
+                      <View
+                        key={idx}
+                        style={[
+                          styles.sparkBar,
+                          {
+                            height: `${Math.max(heightPercent, c > 0 ? 12 : 0)}%`,
+                            backgroundColor: barColor,
+                            opacity: c > 0 ? 0.85 : 0.2,
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+                </View>
+
                 <View style={styles.barTrack}>
                   <View
                     style={[
@@ -246,7 +268,7 @@ const createStyles = (colors: any) =>
       color: colors.text,
     },
     pctRow: {
-      marginLeft: LABEL_WIDTH,
+      marginLeft: LABEL_WIDTH + 48 + 24, // matches label + sparkline width + margins
       marginTop: 4,
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -260,6 +282,19 @@ const createStyles = (colors: any) =>
       fontSize: 11,
       fontWeight: '600',
       color: colors.error,
+    },
+    sparklineCol: {
+      width: 48,
+      height: 24,
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      marginHorizontal: 12,
+    },
+    sparkBar: {
+      width: 4,
+      borderRadius: 1.5,
+      minHeight: 1,
     },
     emptyState: {
       paddingVertical: 48,

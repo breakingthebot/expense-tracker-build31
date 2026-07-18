@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.37.0] - 2026-07-18
+### Added
+- Interactive Weekly Spending Trend Sparklines. Refactored the week summarizer in [monthlySummary.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/monthlySummary.ts) to track daily spending totals per week and updated [WeeklyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/WeeklyChart.tsx) to embed beautiful miniature vertical column sparkline graphs in each row.
+- Updated Jest test coverages inside [monthlySummary.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/monthlySummary.test.ts).
+
 ## [0.36.0] - 2026-07-18
 ### Added
 - Category Budget Goal Overspent Sound Alerts. Created [soundService.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/soundService.ts) synthesizing rising chime tones programmatically using browser-native Web Audio API oscillators, triggering chimes immediately on budget threshold crossings.

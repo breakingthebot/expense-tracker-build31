@@ -232,6 +232,10 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/services/soundService.ts` synthesizes tone frequencies programmatically using Web Audio API nodes.
 - `src/hooks/useExpenses.ts` triggers audio play events on budget goal crossings.
 
+### Weekly Spending Sparkline Trends (Iteration 37)
+- `src/services/monthlySummary.ts` aggregates daily spent totals within each week range.
+- `src/components/WeeklyChart.tsx` maps daily spending arrays to miniature visual bar columns.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no
