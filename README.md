@@ -236,6 +236,9 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/services/monthlySummary.ts` aggregates daily spent totals within each week range.
 - `src/components/WeeklyChart.tsx` maps daily spending arrays to miniature visual bar columns.
 
+### Interactive Forecast Exclusions (Iteration 38)
+- `src/components/ForecastView.tsx` manages user timeline exclusion selections and updates projected balances dynamically.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

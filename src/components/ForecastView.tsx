@@ -68,21 +68,48 @@ export default function ForecastView({
     );
   }, [expenses, recurringSchedules, targetDate, startingBalance, startingBalanceDate]);
 
-  // Compute running balance for each forecast item
-  const itemsWithRunningBalance = useMemo(() => {
+  // Local set of excluded transaction IDs for alternate forecast mapping
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(() => new Set());
+
+  // Compute running balance for each forecast item factoring in active exclusions
+  const { itemsWithRunningBalance, finalProjectedBalanceCents } = useMemo(() => {
     let balance = forecast.currentBalanceCents;
-    return forecast.items.map((item) => {
-      if (item.type === 'income') {
-        balance += item.amountCents;
-      } else {
-        balance -= item.amountCents;
+    const result = forecast.items.map((item) => {
+      const isExcluded = excludedIds.has(item.id);
+      if (!isExcluded) {
+        if (item.type === 'income') {
+          balance += item.amountCents;
+        } else {
+          balance -= item.amountCents;
+        }
       }
       return {
         ...item,
+        isExcluded,
         runningBalance: balance,
       };
     });
-  }, [forecast]);
+    return {
+      itemsWithRunningBalance: result,
+      finalProjectedBalanceCents: balance,
+    };
+  }, [forecast.items, forecast.currentBalanceCents, excludedIds]);
+
+  function toggleExclusion(id: string) {
+    setExcludedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function resetExclusions() {
+    setExcludedIds(new Set());
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -150,17 +177,29 @@ export default function ForecastView({
           <Text
             style={[
               styles.summaryValue,
-              forecast.projectedBalanceCents >= 0 ? styles.positiveText : styles.negativeText,
+              finalProjectedBalanceCents >= 0 ? styles.positiveText : styles.negativeText,
             ]}
           >
-            {formatCents(forecast.projectedBalanceCents)}
+            {formatCents(finalProjectedBalanceCents)}
           </Text>
         </View>
       </View>
 
       {/* Projected Cash Flow Timeline */}
-      <Text style={styles.sectionHeader}>Projected Transactions</Text>
-      
+      <View style={styles.sectionHeaderRow}>
+        <Text style={styles.sectionHeader}>Projected Transactions</Text>
+        {excludedIds.size > 0 && (
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={resetExclusions}
+            accessibilityRole="button"
+            accessibilityLabel="Reset all exclusions"
+          >
+            <Text style={styles.resetText}>↺ Reset Exclusions</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       {itemsWithRunningBalance.length === 0 ? (
         <View style={[styles.card, styles.emptyState]}>
           <Text style={styles.emptyText}>
@@ -172,32 +211,83 @@ export default function ForecastView({
           {itemsWithRunningBalance.map((item) => {
             const isIncome = item.type === 'income';
             return (
-              <View key={item.id} style={styles.timelineItem}>
+              <View
+                key={item.id}
+                style={[
+                  styles.timelineItem,
+                  item.isExcluded && styles.timelineItemExcluded,
+                ]}
+              >
                 <View style={styles.itemHeader}>
                   <View>
-                    <Text style={styles.itemDate}>{formatDisplayDate(item.date)}</Text>
-                    <Text style={styles.itemCategory}>
+                    <Text style={[styles.itemDate, item.isExcluded && styles.lineThrough]}>
+                      {formatDisplayDate(item.date)}
+                    </Text>
+                    <Text style={[styles.itemCategory, item.isExcluded && styles.lineThrough]}>
                       {item.category}
                       {item.note.length > 0 && ` • ${item.note}`}
                     </Text>
                   </View>
 
                   <View style={styles.amountCol}>
-                    <Text style={[styles.itemAmount, isIncome ? styles.incomeText : styles.expenseText]}>
+                    <Text
+                      style={[
+                        styles.itemAmount,
+                        item.isExcluded
+                          ? styles.excludedText
+                          : isIncome
+                          ? styles.incomeText
+                          : styles.expenseText,
+                        item.isExcluded && styles.lineThrough,
+                      ]}
+                    >
                       {isIncome ? '+' : '-'}{formatCents(item.amountCents)}
                     </Text>
                     <Text style={styles.runningBal}>
-                      Bal: {formatCents(item.runningBalance)}
+                      Bal: {item.isExcluded ? '--' : formatCents(item.runningBalance)}
                     </Text>
                   </View>
                 </View>
 
                 <View style={styles.itemMeta}>
-                  <View style={[styles.badge, item.isSimulated ? styles.badgeSimulated : styles.badgeManual]}>
-                    <Text style={[styles.badgeText, item.isSimulated ? styles.badgeTextSimulated : styles.badgeTextManual]}>
-                      {item.isSimulated ? 'Projected Recurring' : 'Future Manual'}
+                  <View
+                    style={[
+                      styles.badge,
+                      item.isExcluded
+                        ? styles.badgeExcluded
+                        : item.isSimulated
+                        ? styles.badgeSimulated
+                        : styles.badgeManual,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        item.isExcluded
+                          ? styles.badgeTextExcluded
+                          : item.isSimulated
+                          ? styles.badgeTextSimulated
+                          : styles.badgeTextManual,
+                      ]}
+                    >
+                      {item.isExcluded
+                        ? 'Excluded'
+                        : item.isSimulated
+                        ? 'Projected Recurring'
+                        : 'Future Manual'}
                     </Text>
                   </View>
+
+                  <TouchableOpacity
+                    style={styles.excludeBtn}
+                    onPress={() => toggleExclusion(item.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={item.isExcluded ? 'Include transaction' : 'Exclude transaction'}
+                  >
+                    <Text style={styles.excludeBtnText}>
+                      {item.isExcluded ? '↺ Include' : '✕ Exclude'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             );
@@ -413,5 +503,54 @@ const createStyles = (colors: any, isDark: boolean) =>
       color: colors.textSecondary,
       textAlign: 'center',
       lineHeight: 18,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 8,
+      marginBottom: 4,
+    },
+    resetButton: {
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+    },
+    resetText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.primary,
+    },
+    timelineItemExcluded: {
+      opacity: 0.45,
+      borderColor: colors.borderSecondary,
+    },
+    lineThrough: {
+      textDecorationLine: 'line-through',
+    },
+    excludedText: {
+      color: colors.textSecondary,
+    },
+    badgeExcluded: {
+      backgroundColor: colors.surfaceSecondary,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+    },
+    badgeTextExcluded: {
+      color: colors.textSecondary,
+      opacity: 0.7,
+    },
+    excludeBtn: {
+      marginLeft: 'auto',
+      paddingVertical: 3,
+      paddingHorizontal: 8,
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      backgroundColor: colors.surfaceSecondary,
+    },
+    excludeBtnText: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: colors.textSecondary,
     },
   });

@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.38.0] - 2026-07-18
+### Added
+- Interactive Forecast Ledger Row Deletion. Enabled in-memory toggle exclusions inside [ForecastView.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ForecastView.tsx) to temporarily exclude individual recurring projections or future manual transactions.
+- Created component tests inside [ForecastView.test.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/components/ForecastView.test.tsx) to verify interactive path projections logic.
+
 ## [0.37.0] - 2026-07-18
 ### Added
 - Interactive Weekly Spending Trend Sparklines. Refactored the week summarizer in [monthlySummary.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/monthlySummary.ts) to track daily spending totals per week and updated [WeeklyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/WeeklyChart.tsx) to embed beautiful miniature vertical column sparkline graphs in each row.
