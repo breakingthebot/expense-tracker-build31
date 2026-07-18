@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.27.0] - 2026-07-18
+### Added
+- Interactive Transaction Category Swapping. Replaced static category labels inside [ExpenseList.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ExpenseList.tsx) with a styled, touchable category badge dropdown trigger.
+- Quick Category Selector Sheet inside [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx) allowing users to swap any transaction's category instantly in storage with a single tap, bypassing the full edit forms.
+
 ## [0.26.0] - 2026-07-18
 ### Added
 - Custom Export Filename Prefix. Updated `exportExpensesToCsv` inside [expenseExport.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/expenseExport.ts) to accept an optional file name prefix parameter, and added unit test cases to [expenseExport.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/expenseExport.test.ts).

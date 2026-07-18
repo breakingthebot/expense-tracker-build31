@@ -46,6 +46,7 @@ export default function HistoryScreen() {
     loading,
     loadError,
     removeExpense,
+    editExpense,
     categories,
     importTransactions,
     seedDemoDataList,
@@ -55,6 +56,8 @@ export default function HistoryScreen() {
   const [exporting, setExporting] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportPrefix, setExportPrefix] = useState('expenses_export');
+  const [categorySwapModalVisible, setCategorySwapModalVisible] = useState(false);
+  const [activeSwapExpense, setActiveSwapExpense] = useState<Expense | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | null>(null);
 
@@ -190,6 +193,30 @@ export default function HistoryScreen() {
       Alert.alert('Export Failed', error instanceof Error ? error.message : 'Please try again.');
     } finally {
       setExporting(false);
+    }
+  }
+
+  function handleCategorySwapClick(expense: Expense) {
+    setActiveSwapExpense(expense);
+    setCategorySwapModalVisible(true);
+  }
+
+  async function handleExecuteCategorySwap(id: string, newCategory: string) {
+    const expense = expenses.find((e) => e.id === id);
+    if (!expense) return;
+
+    try {
+      await editExpense(id, {
+        amountCents: expense.amountCents,
+        category: newCategory as ExpenseCategory,
+        note: expense.note,
+        date: expense.date,
+        type: expense.type ?? 'expense',
+      });
+      setCategorySwapModalVisible(false);
+    } catch (error) {
+      logger.error(SCOPE, 'Failed to swap category', { error: String(error) });
+      Alert.alert('Error', 'Could not update category. Please try again.');
     }
   }
 
@@ -538,9 +565,53 @@ export default function HistoryScreen() {
             setCsvRawText('');
             setShowImportModal(true);
           }}
+          onCategorySwap={handleCategorySwapClick}
           isFiltered={isFiltered}
         />
       )}
+
+      {/* Category Swap Modal */}
+      <Modal
+        visible={categorySwapModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setCategorySwapModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Change Category</Text>
+            <Text style={styles.modalSubtitle}>
+              Select new category for "{activeSwapExpense?.note || activeSwapExpense?.category}":
+            </Text>
+
+            <View style={styles.categorySwapGrid}>
+              {categories.map((cat) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[
+                    styles.categorySwapChip,
+                    { borderColor: cat.color },
+                    activeSwapExpense?.category === cat.name && styles.categorySwapChipActive,
+                  ]}
+                  onPress={() => handleExecuteCategorySwap(activeSwapExpense!.id, cat.name)}
+                  accessibilityRole="button"
+                >
+                  <View style={[styles.colorIndicator, { backgroundColor: cat.color }]} />
+                  <Text style={styles.categorySwapChipText}>{cat.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={styles.categorySwapCloseBtn}
+              onPress={() => setCategorySwapModalVisible(false)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.categorySwapCloseBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Export CSV Configuration modal */}
       <Modal
@@ -1435,6 +1506,51 @@ const createStyles = (colors: any, isDark: boolean) =>
       backgroundColor: colors.background,
     },
     exportCancelBtnText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    categorySwapGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      justifyContent: 'center',
+      marginVertical: 14,
+    },
+    categorySwapChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 16,
+      borderWidth: 1,
+      backgroundColor: colors.background,
+    },
+    categorySwapChipActive: {
+      backgroundColor: colors.surfaceSecondary,
+    },
+    colorIndicator: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      marginRight: 6,
+    },
+    categorySwapChipText: {
+      fontSize: 13,
+      color: colors.text,
+      fontWeight: '600',
+    },
+    categorySwapCloseBtn: {
+      width: '100%',
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      marginTop: 10,
+    },
+    categorySwapCloseBtnText: {
       color: colors.textSecondary,
       fontSize: 14,
       fontWeight: '600',

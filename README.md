@@ -190,6 +190,10 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/services/expenseExport.ts` accepts an optional file name prefix and strips non-alphanumeric chars to guarantee valid target filenames.
 - `src/screens/HistoryScreen.tsx` embeds the Export Configuration Modal, handling filename prefixes and showing a live-updated filename preview path.
 
+### Interactive Transaction Category Swapping (Iteration 27)
+- `src/components/ExpenseList.tsx` replaces transaction category names with touchable, dropdown-indicated badges.
+- `src/screens/HistoryScreen.tsx` features a fast-action Category Swap grid overlay allowing quick-change triggers for selected items.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

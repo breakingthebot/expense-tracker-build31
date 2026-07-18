@@ -19,6 +19,7 @@ interface ExpenseListProps {
   onExport: () => void;
   exporting: boolean;
   onImportClick: () => void;
+  onCategorySwap: (expense: Expense) => void;
   isFiltered?: boolean;
 }
 
@@ -30,6 +31,7 @@ export default function ExpenseList({
   onExport,
   exporting,
   onImportClick,
+  onCategorySwap,
   isFiltered = false,
 }: ExpenseListProps) {
   const { colors } = useTheme();
@@ -91,7 +93,16 @@ export default function ExpenseList({
             accessibilityLabel={`Edit transaction: ${item.category}, ${formatCents(item.amountCents)}`}
           >
             <View style={styles.rowText}>
-              <Text style={styles.category}>{item.category}</Text>
+              <View style={styles.categoryContainer}>
+                <TouchableOpacity
+                  style={styles.categoryBadge}
+                  onPress={() => onCategorySwap(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Change category: ${item.category}`}
+                >
+                  <Text style={styles.categoryText}>{item.category} ▾</Text>
+                </TouchableOpacity>
+              </View>
               {item.note.length > 0 && <Text style={styles.note}>{item.note}</Text>}
               <Text style={styles.date}>{formatDisplayDate(item.date)}</Text>
             </View>
@@ -168,8 +179,20 @@ const createStyles = (colors: any) =>
       flex: 1,
       paddingRight: 12,
     },
-    category: {
-      fontSize: 15,
+    categoryContainer: {
+      flexDirection: 'row',
+      marginBottom: 2,
+    },
+    categoryBadge: {
+      backgroundColor: colors.surfaceSecondary,
+      paddingVertical: 3,
+      paddingHorizontal: 8,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+    },
+    categoryText: {
+      fontSize: 13,
       fontWeight: '600',
       color: colors.text,
     },
