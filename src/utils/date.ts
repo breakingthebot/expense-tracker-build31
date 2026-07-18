@@ -56,3 +56,44 @@ export function addDaysToIso(isoDate: string, days: number): string {
   d.setDate(d.getDate() + days);
   return toIsoDate(d);
 }
+
+/** Computes the start and end dates (YYYY-MM-DD) of the current week (Mon-Sun). */
+export function getThisWeekRange(todayStr: string = todayIsoDate()): { start: string; end: string } {
+  const d = parseIsoDate(todayStr);
+  const day = d.getDay(); // 0 is Sunday, 1 is Monday...
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  
+  const monday = new Date(d.getTime());
+  monday.setDate(monday.getDate() + diffToMonday);
+  
+  const sunday = new Date(monday.getTime());
+  sunday.setDate(sunday.getDate() + 6);
+  
+  return {
+    start: toIsoDate(monday),
+    end: toIsoDate(sunday),
+  };
+}
+
+/** Computes the range for the last 7 days ending today. */
+export function getLast7DaysRange(todayStr: string = todayIsoDate()): { start: string; end: string } {
+  return {
+    start: addDaysToIso(todayStr, -6),
+    end: todayStr,
+  };
+}
+
+/** Computes the range for the current month. */
+export function getThisMonthRange(todayStr: string = todayIsoDate()): { start: string; end: string } {
+  const [y, m] = todayStr.split('-');
+  const year = Number(y);
+  const month = Number(m);
+  
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDay = new Date(year, month, 0);
+  
+  return {
+    start: toIsoDate(firstDay),
+    end: toIsoDate(lastDay),
+  };
+}

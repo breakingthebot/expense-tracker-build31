@@ -167,6 +167,10 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/screens/HistoryScreen.tsx` embeds the forecast interface card with custom date inputs, collapsible projection scrolling lists, and live balance counters.
 - `src/utils/date.ts` introduces `addDaysToIso` to handle calendar day calculations cleanly.
 
+### Date Range Presets & Filter (Iteration 22)
+- `src/utils/date.ts` implements predefined range calculators (`getThisWeekRange`, `getLast7DaysRange`, `getThisMonthRange`).
+- `src/screens/HistoryScreen.tsx` embeds the date range selection strip, custom DatePicker fields, and binds filters to dynamic sum banners.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

@@ -10,6 +10,9 @@ import {
   parseIsoDate,
   shiftMonthKey,
   toIsoDate,
+  getThisWeekRange,
+  getLast7DaysRange,
+  getThisMonthRange,
 } from '../../src/utils/date';
 
 describe('toIsoDate', () => {
@@ -78,5 +81,26 @@ describe('shiftMonthKey', () => {
 
   it('is a no-op with a delta of 0', () => {
     expect(shiftMonthKey('2026-07', 0)).toBe('2026-07');
+  });
+});
+
+describe('date ranges', () => {
+  it('calculates Mon-Sun week range correctly', () => {
+    // 2026-07-18 is a Saturday. Monday of that week is 2026-07-13. Sunday is 2026-07-19.
+    const week = getThisWeekRange('2026-07-18');
+    expect(week.start).toBe('2026-07-13');
+    expect(week.end).toBe('2026-07-19');
+  });
+
+  it('calculates last 7 days range correctly', () => {
+    const range = getLast7DaysRange('2026-07-18');
+    expect(range.start).toBe('2026-07-12');
+    expect(range.end).toBe('2026-07-18');
+  });
+
+  it('calculates month range correctly', () => {
+    const range = getThisMonthRange('2026-07-18');
+    expect(range.start).toBe('2026-07-01');
+    expect(range.end).toBe('2026-07-31');
   });
 });

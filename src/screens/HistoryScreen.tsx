@@ -33,7 +33,7 @@ import { forecastBalance } from '../services/forecaster';
 import { formatCents } from '../utils/currency';
 import { logger } from '../utils/logger';
 import { useTheme } from '../components/ThemeProvider';
-import { addDaysToIso, todayIsoDate } from '../utils/date';
+import { addDaysToIso, todayIsoDate, getThisWeekRange, getLast7DaysRange, getThisMonthRange } from '../utils/date';
 
 const SCOPE = 'HistoryScreen';
 
@@ -51,6 +51,11 @@ export default function HistoryScreen() {
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | null>(null);
+
+  // Date Range Filter States
+  const [datePreset, setDatePreset] = useState<'all' | 'this_week' | 'last_7_days' | 'this_month' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState(todayIsoDate());
+  const [customEndDate, setCustomEndDate] = useState(todayIsoDate());
 
   // Future Forecast States
   const [forecastDate, setForecastDate] = useState(addDaysToIso(todayIsoDate(), 30));
@@ -71,6 +76,21 @@ export default function HistoryScreen() {
     return forecastBalance(expenses, recurringSchedules, forecastDate, todayIsoDate());
   }, [expenses, recurringSchedules, forecastDate]);
 
+  const dateBounds = useMemo(() => {
+    switch (datePreset) {
+      case 'this_week':
+        return getThisWeekRange(todayIsoDate());
+      case 'last_7_days':
+        return getLast7DaysRange(todayIsoDate());
+      case 'this_month':
+        return getThisMonthRange(todayIsoDate());
+      case 'custom':
+        return { start: customStartDate, end: customEndDate };
+      default:
+        return null;
+    }
+  }, [datePreset, customStartDate, customEndDate]);
+
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) => {
       const matchesCategory = !selectedCategory || expense.category === selectedCategory;
@@ -79,11 +99,16 @@ export default function HistoryScreen() {
         !query ||
         expense.note.toLowerCase().includes(query) ||
         expense.category.toLowerCase().includes(query);
-      return matchesCategory && matchesSearch;
+      
+      let matchesDate = true;
+      if (dateBounds) {
+        matchesDate = expense.date >= dateBounds.start && expense.date <= dateBounds.end;
+      }
+      return matchesCategory && matchesSearch && matchesDate;
     });
-  }, [expenses, selectedCategory, searchQuery]);
+  }, [expenses, selectedCategory, searchQuery, dateBounds]);
 
-  const isFiltered = searchQuery.trim().length > 0 || selectedCategory !== null;
+  const isFiltered = searchQuery.trim().length > 0 || selectedCategory !== null || datePreset !== 'all';
 
   // Dynamic Dashboard Stats
   const { totalIncomeCents, totalExpenseCents, netBalanceCents } = useMemo(() => {
@@ -389,6 +414,55 @@ export default function HistoryScreen() {
           })}
         </ScrollView>
       </View>
+
+      {/* Date Range Filter Selector Strip */}
+      <View style={styles.dateFilterContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+          contentContainerStyle={styles.filterContent}
+        >
+          {(['all', 'this_week', 'last_7_days', 'this_month', 'custom'] as const).map((preset) => {
+            const isSelected = datePreset === preset;
+            let label = '';
+            switch (preset) {
+              case 'all': label = 'All Time'; break;
+              case 'this_week': label = 'This Week'; break;
+              case 'last_7_days': label = 'Last 7 Days'; break;
+              case 'this_month': label = 'This Month'; break;
+              case 'custom': label = 'Custom'; break;
+            }
+            return (
+              <TouchableOpacity
+                key={preset}
+                onPress={() => setDatePreset(preset)}
+                style={[styles.filterChip, isSelected && styles.filterChipSelected]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+              >
+                <Text style={[styles.filterChipText, isSelected && styles.filterChipTextSelected]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Custom Date Picker Fields when active */}
+      {datePreset === 'custom' && (
+        <View style={styles.customDateRangeRow}>
+          <View style={styles.customDateCol}>
+            <Text style={styles.customDateLabel}>From:</Text>
+            <DatePicker date={customStartDate} onDateChange={setCustomStartDate} />
+          </View>
+          <View style={styles.customDateCol}>
+            <Text style={styles.customDateLabel}>To:</Text>
+            <DatePicker date={customEndDate} onDateChange={setCustomEndDate} />
+          </View>
+        </View>
+      )}
 
       <ScreenStatus loading={loading} error={loadError} />
       {!loading && !loadError && (
@@ -1054,5 +1128,33 @@ const createStyles = (colors: any, isDark: boolean) =>
     },
     forecastItemAmountExpense: {
       color: colors.text,
+    },
+    dateFilterContainer: {
+      marginTop: 8,
+      marginBottom: 4,
+    },
+    customDateRangeRow: {
+      flexDirection: 'row',
+      marginHorizontal: 16,
+      marginTop: 6,
+      marginBottom: 10,
+      padding: 12,
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      gap: 16,
+    },
+    customDateCol: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    customDateLabel: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginRight: 8,
     },
   });

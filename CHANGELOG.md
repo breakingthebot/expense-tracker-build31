@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.22.0] - 2026-07-18
+### Added
+- Date Range Presets & Filter. Added predefined date range calculations (`getThisWeekRange`, `getLast7DaysRange`, `getThisMonthRange`) in [date.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/utils/date.ts) and wrote unit tests in [date.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/utils/date.test.ts).
+- Sleek interactive horizontal selector strip in [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx) matching other filter systems.
+- Dynamic custom start/end DatePicker fields which appear only when the Custom range preset is toggled active.
+- Unified calculations where the ledger dashboard cards dynamically update summary sums matching the filtered date range context.
+
 ## [0.21.0] - 2026-07-18
 ### Added
 - Cash Flow Forecaster. Created [forecaster.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/forecaster.ts) service simulating upcoming cash flow events and estimating balances for any future date.
