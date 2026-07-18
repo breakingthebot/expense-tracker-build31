@@ -63,3 +63,58 @@ export function summarizeMonth(
 
   return { monthKey, totalCents, categoryTotals };
 }
+
+export interface WeeklyTotal {
+  weekLabel: string;
+  totalCents: number;
+  startDate: string;
+  endDate: string;
+}
+
+export interface MonthlyWeeklySummary {
+  monthKey: string;
+  totalCents: number;
+  weeklyTotals: WeeklyTotal[];
+}
+
+export function summarizeWeeks(
+  expenses: Expense[],
+  monthKey: string,
+  typePreference: TransactionType = 'expense'
+): MonthlyWeeklySummary {
+  const weekBuckets = [
+    { label: 'Week 1', start: 1, end: 7, totalCents: 0 },
+    { label: 'Week 2', start: 8, end: 14, totalCents: 0 },
+    { label: 'Week 3', start: 15, end: 21, totalCents: 0 },
+    { label: 'Week 4', start: 22, end: 28, totalCents: 0 },
+    { label: 'Week 5', start: 29, end: 31, totalCents: 0 },
+  ];
+
+  for (const expense of expenses) {
+    const expenseType = expense.type ?? 'expense';
+    if (!expense.date.startsWith(monthKey) || expenseType !== typePreference) {
+      continue;
+    }
+
+    const day = parseInt(expense.date.substring(8, 10), 10);
+    if (isNaN(day)) continue;
+
+    for (const bucket of weekBuckets) {
+      if (day >= bucket.start && day <= bucket.end) {
+        bucket.totalCents += expense.amountCents;
+        break;
+      }
+    }
+  }
+
+  const weeklyTotals = weekBuckets.map((b) => ({
+    weekLabel: b.label,
+    totalCents: b.totalCents,
+    startDate: `${monthKey}-${String(b.start).padStart(2, '0')}`,
+    endDate: `${monthKey}-${String(b.end).padStart(2, '0')}`,
+  }));
+
+  const totalCents = weeklyTotals.reduce((sum, wt) => sum + wt.totalCents, 0);
+
+  return { monthKey, totalCents, weeklyTotals };
+}

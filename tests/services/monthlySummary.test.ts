@@ -4,7 +4,7 @@
 // Created: 2026-07-12
 
 import { Expense } from '../../src/models/expense';
-import { currentMonthKey, summarizeMonth } from '../../src/services/monthlySummary';
+import { currentMonthKey, summarizeMonth, summarizeWeeks } from '../../src/services/monthlySummary';
 
 function makeExpense(overrides: Partial<Expense>): Expense {
   return {
@@ -79,6 +79,36 @@ describe('summarizeMonth', () => {
       'Health',
       'Shopping',
       'Other',
+    ]);
+  });
+});
+
+describe('summarizeWeeks', () => {
+  it('returns empty weekly buckets when there are no expenses', () => {
+    const summary = summarizeWeeks([], '2026-07');
+    expect(summary.totalCents).toBe(0);
+    expect(summary.weeklyTotals).toHaveLength(5);
+    expect(summary.weeklyTotals[0].totalCents).toBe(0);
+  });
+
+  it('groups expenses into correct weekly buckets', () => {
+    const expenses = [
+      makeExpense({ amountCents: 1000, date: '2026-07-03' }), // Week 1
+      makeExpense({ amountCents: 1500, date: '2026-07-07' }), // Week 1
+      makeExpense({ amountCents: 2000, date: '2026-07-10' }), // Week 2
+      makeExpense({ amountCents: 3000, date: '2026-07-18' }), // Week 3
+      makeExpense({ amountCents: 4000, date: '2026-07-25' }), // Week 4
+      makeExpense({ amountCents: 5000, date: '2026-07-30' }), // Week 5
+    ];
+
+    const summary = summarizeWeeks(expenses, '2026-07');
+    expect(summary.totalCents).toBe(16500);
+    expect(summary.weeklyTotals).toEqual([
+      { weekLabel: 'Week 1', totalCents: 2500, startDate: '2026-07-01', endDate: '2026-07-07' },
+      { weekLabel: 'Week 2', totalCents: 2000, startDate: '2026-07-08', endDate: '2026-07-14' },
+      { weekLabel: 'Week 3', totalCents: 3000, startDate: '2026-07-15', endDate: '2026-07-21' },
+      { weekLabel: 'Week 4', totalCents: 4000, startDate: '2026-07-22', endDate: '2026-07-28' },
+      { weekLabel: 'Week 5', totalCents: 5000, startDate: '2026-07-29', endDate: '2026-07-31' },
     ]);
   });
 });

@@ -197,6 +197,11 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 ### Web Alert/Confirm Dialogs compatibility (Iteration 28)
 - `src/screens/HistoryScreen.tsx` adds a cross-platform helper `showAlert` which detects if running on Web and uses standard browser alert/confirm APIs. This prevents silent execution blockages when deleting items, exporting files, or resetting storage.
 
+### Weekly Summary Chart View (Iteration 29)
+- `src/services/monthlySummary.ts` implements `summarizeWeeks` aggregating transaction values into standard 7-day splits of the month.
+- `src/components/WeeklyChart.tsx` renders a visual horizontal bar track showing weekly spending/income progress and percentage breakdowns.
+- `src/screens/ChartScreen.tsx` features a three-way view selector (Category Breakdown, Weekly Summary, 3-Month Trends) shifting between chart formats dynamically.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

@@ -11,10 +11,11 @@
 import { useMemo, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MonthlyChart from '../components/MonthlyChart';
+import WeeklyChart from '../components/WeeklyChart';
 import TrendChart from '../components/TrendChart';
 import ScreenStatus from '../components/ScreenStatus';
 import { useExpenses } from '../hooks/useExpenses';
-import { currentMonthKey, summarizeMonth } from '../services/monthlySummary';
+import { currentMonthKey, summarizeMonth, summarizeWeeks } from '../services/monthlySummary';
 import { getTrendSummary } from '../services/trendSummary';
 import { formatMonthLabel, shiftMonthKey } from '../utils/date';
 import { useTheme } from '../components/ThemeProvider';
@@ -30,7 +31,7 @@ export default function ChartScreen() {
     loadError,
   } = useExpenses();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
-  const [viewMode, setViewMode] = useState<'monthly' | 'trend'>('monthly');
+  const [viewMode, setViewMode] = useState<'monthly' | 'weekly' | 'trend'>('monthly');
 
   // Theme support
   const { colors, isDark } = useTheme();
@@ -38,6 +39,10 @@ export default function ChartScreen() {
 
   const summary = useMemo(() => {
     return summarizeMonth(expenses, monthKey, defaultTxType);
+  }, [expenses, monthKey, defaultTxType]);
+
+  const weeklySummary = useMemo(() => {
+    return summarizeWeeks(expenses, monthKey, defaultTxType);
   }, [expenses, monthKey, defaultTxType]);
 
   const trendSummary = useMemo(() => {
@@ -136,6 +141,16 @@ export default function ChartScreen() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
+              style={[styles.toggleButton, viewMode === 'weekly' && styles.toggleButtonActive]}
+              onPress={() => setViewMode('weekly')}
+              accessibilityRole="button"
+              accessibilityLabel="View weekly summary breakdown"
+            >
+              <Text style={[styles.toggleText, viewMode === 'weekly' && styles.toggleTextActive]}>
+                Weekly
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.toggleButton, viewMode === 'trend' && styles.toggleButtonActive]}
               onPress={() => setViewMode('trend')}
               accessibilityRole="button"
@@ -148,14 +163,21 @@ export default function ChartScreen() {
           </View>
 
           {/* Conditional Content Rendering */}
-          {viewMode === 'monthly' ? (
+          {viewMode === 'monthly' && (
             <MonthlyChart
               summary={summary}
               categoryColors={categoryColors}
               budgetGoals={budgetGoals}
               chartType={defaultTxType}
             />
-          ) : (
+          )}
+          {viewMode === 'weekly' && (
+            <WeeklyChart
+              summary={weeklySummary}
+              chartType={defaultTxType}
+            />
+          )}
+          {viewMode === 'trend' && (
             <TrendChart
               trends={trendSummary}
               latestMonthLabel={formatMonthLabel(monthKey)}

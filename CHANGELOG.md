@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.29.0] - 2026-07-18
+### Added
+- Weekly Summary Chart View. Created [WeeklyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/WeeklyChart.tsx) component rendering horizontal bar tracks representing spending/income totals grouped by weeks (1-7th, 8-14th, 15-21st, 22-28th, 29th+).
+- Added `summarizeWeeks` service method to [monthlySummary.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/monthlySummary.ts) and wrote unit test coverages inside [monthlySummary.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/monthlySummary.test.ts).
+- Upgraded [ChartScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ChartScreen.tsx) to feature a 3-way toggle selector (Breakdown, Weekly, Trends) matching active view states.
+
 ## [0.28.0] - 2026-07-18
 ### Fixed
 - Web Alert/Confirm Dialogs compatibility. Implemented a cross-platform wrapper function `showAlert` in [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx) mapping to native `Alert.alert` on mobile and `window.confirm`/`window.alert` on web, resolving the bug where delete confirmations, export warnings, and databases wipes failed silently in browser engines.
