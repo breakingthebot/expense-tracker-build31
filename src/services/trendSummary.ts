@@ -1,11 +1,11 @@
 // src/services/trendSummary.ts
-// Aggregates spending data over a rolling 3-month window to calculate trends
+// Aggregates spending/income data over a rolling 3-month window to calculate trends
 // and percentage changes per category.
 // Connects to: src/models/expense.ts, src/utils/date.ts
 // Created: 2026-07-17
 
 import { ExpenseCategory } from '../config/categories';
-import { Expense } from '../models/expense';
+import { Expense, TransactionType } from '../models/expense';
 import { shiftMonthKey } from '../utils/date';
 
 export interface MonthlyAmount {
@@ -32,10 +32,14 @@ function getShortMonthLabel(monthKey: string): string {
 }
 
 /**
- * Computes a 3-month trend summary for all categories that had spending in the period.
- * Summarizes the last 3 months ending at `latestMonthKey`.
+ * Computes a 3-month trend summary for all categories that had transactions in the period.
+ * Summarizes the last 3 months ending at `latestMonthKey` matching the typePreference.
  */
-export function getTrendSummary(expenses: Expense[], latestMonthKey: string): CategoryTrend[] {
+export function getTrendSummary(
+  expenses: Expense[],
+  latestMonthKey: string,
+  typePreference: TransactionType = 'expense'
+): CategoryTrend[] {
   // 1. Resolve the 3 target month keys
   const month1 = shiftMonthKey(latestMonthKey, -2); // Oldest
   const month2 = shiftMonthKey(latestMonthKey, -1); // Previous
@@ -47,7 +51,8 @@ export function getTrendSummary(expenses: Expense[], latestMonthKey: string): Ca
   const categoryMap = new Map<ExpenseCategory, Record<string, number>>();
 
   expenses.forEach((expense) => {
-    if (expense.type === 'income') {
+    const expenseType = expense.type ?? 'expense';
+    if (expenseType !== typePreference) {
       return;
     }
     const expenseMonth = expense.date.slice(0, 7); // yyyy-mm

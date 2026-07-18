@@ -1,10 +1,8 @@
 // src/components/MonthlyChart.tsx
-// Horizontal bar chart of spending by category for one month.
-// Presentational only — ChartScreen.tsx handles month navigation,
-// and computes the summary via monthlySummary.ts.
-// Colors and budget goals are passed dynamically.
-// Displays progress metrics and warning flags inline below the bar tracks
-// if a monthly category budget goal has been configured.
+// Horizontal bar chart of spending/income by category for one month.
+// When rendering expenses: categories with monthly budget goals display a target gauge
+// where the bar track represents 100% of the budget cap. Spent progress is filled,
+// turning red if exceeded. Categories without budget caps scale relative to the highest spender.
 // Connects to: src/services/monthlySummary.ts, src/utils/currency.ts,
 // src/components/ThemeProvider.tsx
 // Created: 2026-07-12
@@ -13,15 +11,22 @@ import { StyleSheet, Text, View } from 'react-native';
 import { MonthlySummary } from '../services/monthlySummary';
 import { formatCents } from '../utils/currency';
 import { useTheme } from './ThemeProvider';
+import { TransactionType } from '../models/expense';
 
 interface MonthlyChartProps {
   summary: MonthlySummary;
   categoryColors: Record<string, string>;
   budgetGoals: Record<string, number>;
+  chartType?: TransactionType;
 }
 
 /** Renders the monthly category breakdown chart with budget progress warnings. */
-export default function MonthlyChart({ summary, categoryColors, budgetGoals }: MonthlyChartProps) {
+export default function MonthlyChart({
+  summary,
+  categoryColors,
+  budgetGoals,
+  chartType = 'expense',
+}: MonthlyChartProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const maxCents = summary.categoryTotals[0]?.totalCents ?? 0;
@@ -29,7 +34,9 @@ export default function MonthlyChart({ summary, categoryColors, budgetGoals }: M
   if (summary.categoryTotals.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateText}>No expenses this month.</Text>
+        <Text style={styles.emptyStateText}>
+          {chartType === 'income' ? 'No income logged this month.' : 'No expenses logged this month.'}
+        </Text>
       </View>
     );
   }
@@ -37,14 +44,27 @@ export default function MonthlyChart({ summary, categoryColors, budgetGoals }: M
   return (
     <View style={styles.container}>
       <Text style={styles.totalValue}>{formatCents(summary.totalCents)}</Text>
-      <Text style={styles.totalCaption}>total spent</Text>
+      <Text style={styles.totalCaption}>
+        {chartType === 'income' ? 'total income' : 'total spent'}
+      </Text>
 
       <View style={styles.rows}>
         {summary.categoryTotals.map((entry) => {
-          const widthPercent = maxCents === 0 ? 0 : (entry.totalCents / maxCents) * 100;
           const barColor = categoryColors[entry.category] || '#999';
-          const budgetGoalCents = budgetGoals[entry.category] ?? 0;
+          const budgetGoalCents = chartType === 'expense' ? (budgetGoals[entry.category] ?? 0) : 0;
           const isOverBudget = budgetGoalCents > 0 && entry.totalCents > budgetGoalCents;
+          
+          let widthPercent = 0;
+          const isBudgetGauge = budgetGoalCents > 0;
+
+          if (isBudgetGauge) {
+            // Scale bar fill to the budget limit (cap at 100% visually, detail text shows overflow)
+            widthPercent = Math.min(100, (entry.totalCents / budgetGoalCents) * 100);
+          } else {
+            // Scale bar fill relative to the highest category total in this month
+            widthPercent = maxCents === 0 ? 0 : (entry.totalCents / maxCents) * 100;
+          }
+
           const pct = budgetGoalCents > 0 ? Math.round((entry.totalCents / budgetGoalCents) * 100) : 0;
 
           return (
@@ -53,27 +73,33 @@ export default function MonthlyChart({ summary, categoryColors, budgetGoals }: M
                 <Text style={styles.categoryLabel} numberOfLines={1}>
                   {entry.category}
                 </Text>
-                <View style={styles.barTrack}>
+                
+                {/* Bar Track: Budget gauges styled with a clean container border */}
+                <View style={[styles.barTrack, isBudgetGauge && styles.budgetBarTrack]}>
                   <View
                     style={[
                       styles.bar,
                       {
                         width: `${widthPercent}%`,
-                        backgroundColor: isOverBudget ? colors.error : barColor, // Change to alert color if over budget
+                        backgroundColor: isOverBudget ? colors.error : barColor,
                       },
                     ]}
                   />
                 </View>
-                <Text style={styles.valueLabel}>{formatCents(entry.totalCents)}</Text>
+                
+                <Text style={styles.valueLabel}>
+                  {formatCents(entry.totalCents)}
+                  {isOverBudget && <Text style={styles.dangerIndicator}> ⚠️</Text>}
+                </Text>
               </View>
 
-              {/* Dynamic Budget Progress Row */}
+              {/* Dynamic Budget Progress Row below the gauge */}
               {budgetGoalCents > 0 && (
                 <View style={styles.budgetRow}>
                   <Text style={[styles.budgetText, isOverBudget && styles.budgetWarningText]}>
                     {isOverBudget
-                      ? `⚠️ Over budget by ${formatCents(entry.totalCents - budgetGoalCents)} (${formatCents(entry.totalCents)} / ${formatCents(budgetGoalCents)})`
-                      : `${formatCents(entry.totalCents)} of ${formatCents(budgetGoalCents)} budget (${pct}%)`}
+                      ? `⚠️ Over budget by ${formatCents(entry.totalCents - budgetGoalCents)} (${pct}%)`
+                      : `${formatCents(entry.totalCents)} spent of ${formatCents(budgetGoalCents)} budget (${pct}%)`}
                   </Text>
                 </View>
               )}
@@ -86,7 +112,7 @@ export default function MonthlyChart({ summary, categoryColors, budgetGoals }: M
 }
 
 const CATEGORY_LABEL_WIDTH = 100;
-const VALUE_LABEL_WIDTH = 68;
+const VALUE_LABEL_WIDTH = 80;
 const BAR_HEIGHT = 16;
 
 const createStyles = (colors: any) =>
@@ -107,6 +133,9 @@ const createStyles = (colors: any) =>
       color: colors.textSecondary,
       marginBottom: 20,
       textAlign: 'center',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      fontWeight: '600',
     },
     rows: {
       gap: 16,
@@ -131,6 +160,11 @@ const createStyles = (colors: any) =>
       borderRadius: 4,
       overflow: 'hidden',
     },
+    budgetBarTrack: {
+      borderWidth: 1,
+      borderColor: colors.borderSecondary,
+      backgroundColor: colors.surface,
+    },
     bar: {
       height: BAR_HEIGHT,
       borderTopRightRadius: 4,
@@ -143,6 +177,9 @@ const createStyles = (colors: any) =>
       fontSize: 13,
       fontWeight: '600',
       color: colors.text,
+    },
+    dangerIndicator: {
+      color: colors.error,
     },
     emptyState: {
       paddingVertical: 48,

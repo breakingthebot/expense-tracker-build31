@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.19.0] - 2026-07-18
+### Added
+- Category Budget Goals Graph (Option 1). Refactored [MonthlyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/MonthlyChart.tsx) to render visual target progress meters scaled to each category's budget cap. Spent progress is filled, turning warning red (`colors.error`) and displaying warning banners when exceeded.
+- Shared Transaction Type Preference. Extended [useExpenses.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/hooks/useExpenses.ts) to store the active `'expense' | 'income'` layout state preference to `@expense_tracker/default_tx_type` in AsyncStorage.
+- Default Tab Synchronization. Configured [AddScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/AddScreen.tsx) and [ChartScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/ChartScreen.tsx) to read and synchronize default transaction type states automatically. Switching toggles in one tab updates the default view on the other.
+- Support for Income Category breakdowns and Trends in [monthlySummary.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/monthlySummary.ts) and [trendSummary.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/trendSummary.ts).
+
+### Changed
+- Refactored [AddExpenseForm.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/AddExpenseForm.tsx) to hook transaction type switches into the `onTypeChange` synchronizer.
+
 ## [0.18.0] - 2026-07-18
 ### Added
 - Visual Improvements & Theme Selector. Implemented [ThemeProvider.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ThemeProvider.tsx) exporting a react navigation styling context.

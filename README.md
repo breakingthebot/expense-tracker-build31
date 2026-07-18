@@ -152,6 +152,12 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/screens/HistoryScreen.tsx` renders emoji theme selectors in the ledger dashboard layout.
 - `src/components/DatePicker.tsx` and `src/components/ScreenStatus.tsx` style indicators and forms dynamically based on themes.
 
+### Category Budget Goals Graph & Tab Sync (Iteration 19)
+- `src/components/MonthlyChart.tsx` implements target budget progress meters, warning rows, and overflow calculations for budgeted categories.
+- `src/hooks/useExpenses.ts` adds default transaction type states and persists active selection keys to AsyncStorage.
+- `src/screens/ChartScreen.tsx` maps mode selection buttons to coordinate layout display states with other navigation segments.
+- `src/services/monthlySummary.ts` and `src/services/trendSummary.ts` filter items by type parameters to aggregate both income and expense category sets.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

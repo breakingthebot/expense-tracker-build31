@@ -6,7 +6,7 @@
 // Created: 2026-07-12
 
 import { ExpenseCategory } from '../config/categories';
-import { Expense } from '../models/expense';
+import { Expense, TransactionType } from '../models/expense';
 
 export interface CategoryTotal {
   category: ExpenseCategory;
@@ -16,7 +16,7 @@ export interface CategoryTotal {
 export interface MonthlySummary {
   monthKey: string;
   totalCents: number;
-  /** Only categories with spending in this month, sorted highest first. */
+  /** Only categories with spending/income in this month, sorted highest first. */
   categoryTotals: CategoryTotal[];
 }
 
@@ -29,15 +29,20 @@ export function currentMonthKey(): string {
 }
 
 /**
- * Summarizes spending by category for one month.
+ * Summarizes transactions by category for one month.
  * `expenses` can span any range — only entries whose date falls in `monthKey`
- * (yyyy-mm) are counted.
+ * (yyyy-mm) and matches the typePreference ('expense' or 'income') are counted.
  */
-export function summarizeMonth(expenses: Expense[], monthKey: string): MonthlySummary {
+export function summarizeMonth(
+  expenses: Expense[],
+  monthKey: string,
+  typePreference: TransactionType = 'expense'
+): MonthlySummary {
   const totalsByCategory = new Map<ExpenseCategory, number>();
 
   for (const expense of expenses) {
-    if (!expense.date.startsWith(monthKey) || expense.type === 'income') {
+    const expenseType = expense.type ?? 'expense';
+    if (!expense.date.startsWith(monthKey) || expenseType !== typePreference) {
       continue;
     }
     totalsByCategory.set(

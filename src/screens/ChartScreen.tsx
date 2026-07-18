@@ -20,7 +20,15 @@ import { formatMonthLabel, shiftMonthKey } from '../utils/date';
 import { useTheme } from '../components/ThemeProvider';
 
 export default function ChartScreen() {
-  const { expenses, categories, budgetGoals, loading, loadError } = useExpenses();
+  const {
+    expenses,
+    categories,
+    budgetGoals,
+    defaultTxType,
+    setDefaultTxType,
+    loading,
+    loadError,
+  } = useExpenses();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
   const [viewMode, setViewMode] = useState<'monthly' | 'trend'>('monthly');
 
@@ -28,11 +36,13 @@ export default function ChartScreen() {
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors, isDark);
 
-  // Compute a list of category names for monthly summary matching
-  const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
+  const summary = useMemo(() => {
+    return summarizeMonth(expenses, monthKey, defaultTxType);
+  }, [expenses, monthKey, defaultTxType]);
 
-  const summary = useMemo(() => summarizeMonth(expenses, monthKey), [expenses, monthKey]);
-  const trendSummary = useMemo(() => getTrendSummary(expenses, monthKey), [expenses, monthKey]);
+  const trendSummary = useMemo(() => {
+    return getTrendSummary(expenses, monthKey, defaultTxType);
+  }, [expenses, monthKey, defaultTxType]);
 
   // Construct a dynamic lookup map of category names to hex color codes
   const categoryColors = useMemo(() => {
@@ -83,6 +93,36 @@ export default function ChartScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Expense/Income Mode Segment Toggles (Default Tabs synchronizer) */}
+          <View style={styles.modeToggleRow}>
+            <TouchableOpacity
+              style={[
+                styles.modeToggleButton,
+                defaultTxType === 'expense' && styles.modeToggleButtonActiveExpense,
+              ]}
+              onPress={() => setDefaultTxType('expense')}
+              accessibilityRole="button"
+              accessibilityLabel="Switch charts to Expense data"
+            >
+              <Text style={[styles.modeToggleText, defaultTxType === 'expense' && styles.modeToggleTextActive]}>
+                Expenses
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.modeToggleButton,
+                defaultTxType === 'income' && styles.modeToggleButtonActiveIncome,
+              ]}
+              onPress={() => setDefaultTxType('income')}
+              accessibilityRole="button"
+              accessibilityLabel="Switch charts to Income data"
+            >
+              <Text style={[styles.modeToggleText, defaultTxType === 'income' && styles.modeToggleTextActive]}>
+                Income
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           {/* View Mode Toggle Row */}
           <View style={styles.toggleRow}>
             <TouchableOpacity
@@ -113,6 +153,7 @@ export default function ChartScreen() {
               summary={summary}
               categoryColors={categoryColors}
               budgetGoals={budgetGoals}
+              chartType={defaultTxType}
             />
           ) : (
             <TrendChart
@@ -160,6 +201,34 @@ const createStyles = (colors: any, isDark: boolean) =>
       color: colors.text,
       minWidth: 120,
       textAlign: 'center',
+    },
+    modeToggleRow: {
+      flexDirection: 'row',
+      marginHorizontal: 16,
+      marginTop: 14,
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: 8,
+      padding: 3,
+    },
+    modeToggleButton: {
+      flex: 1,
+      paddingVertical: 10,
+      alignItems: 'center',
+      borderRadius: 6,
+    },
+    modeToggleButtonActiveExpense: {
+      backgroundColor: colors.primary,
+    },
+    modeToggleButtonActiveIncome: {
+      backgroundColor: colors.success,
+    },
+    modeToggleText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
+    modeToggleTextActive: {
+      color: '#fff',
     },
     toggleRow: {
       flexDirection: 'row',

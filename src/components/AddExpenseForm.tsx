@@ -6,7 +6,7 @@
 // src/models/recurring.ts, src/models/expense.ts, src/components/ThemeProvider.tsx
 // Created: 2026-07-12
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DatePicker from './DatePicker';
 import { ExpenseCategory } from '../config/categories';
@@ -31,6 +31,8 @@ interface AddExpenseFormProps {
   onSubmit: (data: AddFormSubmitData) => Promise<void>;
   submitting: boolean;
   categories: Category[];
+  defaultTxType: TransactionType;
+  onTypeChange?: (type: TransactionType) => void;
   /** When set, the form edits this transaction instead of creating a new one. */
   editingExpense?: Expense;
   /** Shown only in edit mode; lets the user back out without saving. */
@@ -42,6 +44,8 @@ export default function AddExpenseForm({
   onSubmit,
   submitting,
   categories,
+  defaultTxType,
+  onTypeChange,
   editingExpense,
   onCancelEdit,
 }: AddExpenseFormProps) {
@@ -50,7 +54,7 @@ export default function AddExpenseForm({
   const styles = createStyles(colors, isDark);
 
   const [type, setType] = useState<TransactionType>(
-    editingExpense?.type ?? 'expense'
+    editingExpense?.type ?? defaultTxType
   );
   const [amountText, setAmountText] = useState(
     editingExpense ? centsToInputString(editingExpense.amountCents) : ''
@@ -63,6 +67,12 @@ export default function AddExpenseForm({
   const [isRecurring, setIsRecurring] = useState(false);
   const [interval, setInterval] = useState<RecurringInterval>('monthly');
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setType(defaultTxType);
+    }
+  }, [defaultTxType, isEditing]);
 
   async function handleSubmit() {
     const amountCents = parseDollarsToCents(amountText);
@@ -104,7 +114,10 @@ export default function AddExpenseForm({
       <View style={styles.segmentedContainer}>
         <TouchableOpacity
           style={[styles.segmentButton, type === 'expense' && styles.segmentButtonActiveExpense]}
-          onPress={() => setType('expense')}
+          onPress={() => {
+            setType('expense');
+            onTypeChange?.('expense');
+          }}
           accessibilityRole="button"
           accessibilityLabel="Transaction Type: Expense"
         >
@@ -114,7 +127,10 @@ export default function AddExpenseForm({
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.segmentButton, type === 'income' && styles.segmentButtonActiveIncome]}
-          onPress={() => setType('income')}
+          onPress={() => {
+            setType('income');
+            onTypeChange?.('income');
+          }}
           accessibilityRole="button"
           accessibilityLabel="Transaction Type: Income"
         >

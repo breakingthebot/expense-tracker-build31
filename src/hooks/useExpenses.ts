@@ -2,7 +2,7 @@
 // Shared data hook for the Add, History, and Chart screens. Loads expenses,
 // active recurring schedules, custom categories, monthly budget goals on focus.
 // Coordinates generators and CRUD actions for transactions, schedules, categories,
-// budget goals, and bulk CSV transaction imports.
+// budget goals, bulk CSV transaction imports, and default transaction type preferences.
 // Connects to: src/services/expenseStorage.ts, src/services/recurringStorage.ts,
 // src/services/recurringGenerator.ts, src/services/categoryStorage.ts,
 // src/services/budgetStorage.ts, src/services/csvImport.ts, src/utils/date.ts
@@ -10,7 +10,8 @@
 
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { Expense, NewExpenseInput } from '../models/expense';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Expense, NewExpenseInput, TransactionType } from '../models/expense';
 import { NewRecurringInput, RecurringExpense } from '../models/recurring';
 import { Category, getCategories, addCategory, renameCategory, deleteCategory } from '../services/categoryStorage';
 import { getBudgetGoals, setBudgetGoal } from '../services/budgetStorage';
@@ -52,6 +53,7 @@ interface UseExpensesResult {
   recurringSchedules: RecurringExpense[];
   categories: Category[];
   budgetGoals: Record<string, number>;
+  defaultTxType: TransactionType;
   loading: boolean;
   loadError: string | null;
   submitting: boolean;
@@ -65,6 +67,7 @@ interface UseExpensesResult {
   removeCategory: (id: string) => Promise<void>;
   updateBudgetGoal: (category: string, limitCents: number) => Promise<void>;
   importTransactions: (csvContent: string) => Promise<ValidationResult>;
+  setDefaultTxType: (type: TransactionType) => Promise<void>;
 }
 
 export function useExpenses(): UseExpensesResult {
@@ -72,6 +75,7 @@ export function useExpenses(): UseExpensesResult {
   const [recurringSchedules, setRecurringSchedules] = useState<RecurringExpense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgetGoals, setBudgetGoals] = useState<Record<string, number>>({});
+  const [defaultTxType, setDefaultTxTypeState] = useState<TransactionType>('expense');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -109,6 +113,12 @@ export function useExpenses(): UseExpensesResult {
       // 6. Fetch monthly category budget goals
       const goals = await getBudgetGoals();
       setBudgetGoals(goals);
+
+      // 7. Load default transaction type preference
+      const savedType = await AsyncStorage.getItem('@expense_tracker/default_tx_type');
+      if (savedType === 'expense' || savedType === 'income') {
+        setDefaultTxTypeState(savedType as TransactionType);
+      }
     } catch (error) {
       logger.error(SCOPE, 'Failed to load expenses, schedules, categories, or budgets', { error: String(error) });
       setLoadError(error instanceof Error ? error.message : 'Could not load your data.');
@@ -237,11 +247,22 @@ export function useExpenses(): UseExpensesResult {
     }
   }
 
+  async function setDefaultTxType(type: TransactionType) {
+    try {
+      setDefaultTxTypeState(type);
+      await AsyncStorage.setItem('@expense_tracker/default_tx_type', type);
+      logger.info(SCOPE, 'Default transaction type updated', { type });
+    } catch (error) {
+      logger.error(SCOPE, 'Failed to save default transaction type', { error: String(error) });
+    }
+  }
+
   return {
     expenses,
     recurringSchedules,
     categories,
     budgetGoals,
+    defaultTxType,
     loading,
     loadError,
     submitting,
@@ -255,5 +276,6 @@ export function useExpenses(): UseExpensesResult {
     removeCategory,
     updateBudgetGoal,
     importTransactions,
+    setDefaultTxType,
   };
 }

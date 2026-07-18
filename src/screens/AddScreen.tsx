@@ -57,6 +57,8 @@ export default function AddScreen() {
     removeCategory,
     budgetGoals,
     updateBudgetGoal,
+    defaultTxType,
+    setDefaultTxType,
   } = useExpenses();
 
   const editingExpense = route.params?.editingExpense;
@@ -181,6 +183,8 @@ export default function AddScreen() {
           onSubmit={handleFormSubmit}
           submitting={submitting}
           categories={categories}
+          defaultTxType={defaultTxType}
+          onTypeChange={setDefaultTxType}
           editingExpense={editingExpense}
           onCancelEdit={handleCancelEdit}
         />
