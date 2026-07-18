@@ -3,6 +3,10 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.30.0] - 2026-07-18
+### Fixed
+- Web Date Picker future dates limitation. Removed `max` input date constraint from [DatePicker.web.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/DatePicker.web.tsx) allowing users to select any future dates on web browsers to plan, log, and forecast future bills and incomes.
+
 ## [0.29.0] - 2026-07-18
 ### Added
 - Weekly Summary Chart View. Created [WeeklyChart.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/WeeklyChart.tsx) component rendering horizontal bar tracks representing spending/income totals grouped by weeks (1-7th, 8-14th, 15-21st, 22-28th, 29th+).

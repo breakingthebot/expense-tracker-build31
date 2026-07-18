@@ -202,6 +202,9 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/components/WeeklyChart.tsx` renders a visual horizontal bar track showing weekly spending/income progress and percentage breakdowns.
 - `src/screens/ChartScreen.tsx` features a three-way view selector (Category Breakdown, Weekly Summary, 3-Month Trends) shifting between chart formats dynamically.
 
+### Future Date Picker Selection (Iteration 30)
+- `src/components/DatePicker.web.tsx` removes the `max` date attribute constraint, enabling web users to select any future dates and log future-dated bills/incomes.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

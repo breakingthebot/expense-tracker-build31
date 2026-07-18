@@ -11,15 +11,11 @@ interface DatePickerProps {
 }
 
 export default function DatePicker({ date, onDateChange }: DatePickerProps) {
-  // Today's date in yyyy-mm-dd format for max date boundary
-  const todayStr = new Date().toISOString().split('T')[0];
-
   return (
     <View style={styles.container}>
       <input
         type="date"
         value={date}
-        max={todayStr}
         onChange={(e) => onDateChange(e.target.value)}
         style={{
           width: '100%',
