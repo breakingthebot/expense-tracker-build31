@@ -32,6 +32,16 @@ const QUICK_INCOME_PRESETS = [
   { label: '🎁 Gift', amount: '50.00', category: 'Other', note: 'Gift' },
 ];
 
+const INTERVAL_OPTIONS: { value: RecurringInterval; label: string }[] = [
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'biweekly', label: 'Bi-Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'bimonthly', label: 'Bi-Monthly' },
+  { value: 'six_months', label: '6 Months' },
+  { value: 'yearly', label: 'Yearly' },
+];
+
 export interface AddFormSubmitData {
   amountCents: number;
   category: ExpenseCategory;
@@ -273,13 +283,13 @@ export default function AddExpenseForm({
             <View style={styles.intervalRow}>
               <Text style={styles.intervalLabel}>Frequency</Text>
               <View style={styles.frequencyButtons}>
-                {(['daily', 'weekly', 'monthly'] as const).map((mode) => {
-                  const isActive = interval === mode;
+                {INTERVAL_OPTIONS.map((opt) => {
+                  const isActive = interval === opt.value;
                   return (
                     <TouchableOpacity
-                      key={mode}
+                      key={opt.value}
                       style={[styles.frequencyButton, isActive && styles.frequencyButtonActive]}
-                      onPress={() => setInterval(mode)}
+                      onPress={() => setInterval(opt.value)}
                       disabled={submitting}
                       accessibilityRole="button"
                     >
@@ -289,7 +299,7 @@ export default function AddExpenseForm({
                           isActive && styles.frequencyButtonTextActive,
                         ]}
                       >
-                        {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                        {opt.label}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -505,16 +515,18 @@ const createStyles = (colors: any, isDark: boolean) =>
     },
     frequencyButtons: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: 6,
     },
     frequencyButton: {
-      flex: 1,
-      paddingVertical: 6,
+      paddingVertical: 8,
+      paddingHorizontal: 8,
       borderWidth: 1,
       borderColor: colors.borderSecondary,
       borderRadius: 6,
       alignItems: 'center',
       backgroundColor: colors.background,
+      minWidth: '22%',
     },
     frequencyButtonActive: {
       borderColor: colors.primary,

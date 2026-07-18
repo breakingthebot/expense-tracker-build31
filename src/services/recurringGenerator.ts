@@ -55,11 +55,59 @@ export function getRecurringInstanceDates(
       }
       k++;
     }
+  } else if (interval === 'biweekly') {
+    let k = 0;
+    const start = parseIsoDate(startDate);
+    while (true) {
+      const candidate = addDays(start, k * 14);
+      const candStr = toIsoDate(candidate);
+      if (candStr > endDate) break;
+      if (candStr > minDateStr) {
+        dates.push(candStr);
+      }
+      k++;
+    }
   } else if (interval === 'monthly') {
     let k = 0;
     const { year: y, month: m, day: d } = parseDateParts(startDate);
     while (true) {
       let newMonth = m + k;
+      let newYear = y + Math.floor((newMonth - 1) / 12);
+      newMonth = ((newMonth - 1) % 12) + 1;
+
+      const lastDayInMonth = new Date(newYear, newMonth, 0).getDate();
+      const newDay = Math.min(d, lastDayInMonth);
+      const candidate = new Date(newYear, newMonth - 1, newDay);
+      const candStr = toIsoDate(candidate);
+      if (candStr > endDate) break;
+      if (candStr > minDateStr) {
+        dates.push(candStr);
+      }
+      k++;
+    }
+  } else if (interval === 'bimonthly') {
+    let k = 0;
+    const { year: y, month: m, day: d } = parseDateParts(startDate);
+    while (true) {
+      let newMonth = m + k * 2;
+      let newYear = y + Math.floor((newMonth - 1) / 12);
+      newMonth = ((newMonth - 1) % 12) + 1;
+
+      const lastDayInMonth = new Date(newYear, newMonth, 0).getDate();
+      const newDay = Math.min(d, lastDayInMonth);
+      const candidate = new Date(newYear, newMonth - 1, newDay);
+      const candStr = toIsoDate(candidate);
+      if (candStr > endDate) break;
+      if (candStr > minDateStr) {
+        dates.push(candStr);
+      }
+      k++;
+    }
+  } else if (interval === 'six_months') {
+    let k = 0;
+    const { year: y, month: m, day: d } = parseDateParts(startDate);
+    while (true) {
+      let newMonth = m + k * 6;
       let newYear = y + Math.floor((newMonth - 1) / 12);
       newMonth = ((newMonth - 1) % 12) + 1;
 

@@ -39,6 +39,35 @@ describe('recurringGenerator - getRecurringInstanceDates', () => {
     ]);
   });
 
+  it('generates biweekly dates correctly', () => {
+    // Start: May 1, today: May 30
+    // Biweekly instances: May 1, May 15, May 29
+    expect(getRecurringInstanceDates('2026-05-01', null, '2026-05-30', 'biweekly')).toEqual([
+      '2026-05-01',
+      '2026-05-15',
+      '2026-05-29',
+    ]);
+  });
+
+  it('generates bimonthly dates correctly', () => {
+    // Start: Jan 31, today: Jun 5
+    // Candidates: Jan 31, Mar 31, May 31
+    expect(getRecurringInstanceDates('2026-01-31', null, '2026-06-05', 'bimonthly')).toEqual([
+      '2026-01-31',
+      '2026-03-31',
+      '2026-05-31',
+    ]);
+  });
+
+  it('generates six_months dates correctly', () => {
+    // Start: Jan 31, today: Dec 31
+    // Candidates: Jan 31, Jul 31
+    expect(getRecurringInstanceDates('2026-01-31', null, '2026-12-31', 'six_months')).toEqual([
+      '2026-01-31',
+      '2026-07-31',
+    ]);
+  });
+
   it('generates monthly dates correctly and caps month-end days', () => {
     // Start: Jan 31, today: Apr 5
     // Monthly candidates: Jan 31, Feb 28 (leap cap), Mar 31

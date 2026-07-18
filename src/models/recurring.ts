@@ -6,7 +6,14 @@
 import { ExpenseCategory } from '../config/categories';
 import { TransactionType } from './expense';
 
-export type RecurringInterval = 'daily' | 'weekly' | 'monthly' | 'yearly';
+export type RecurringInterval =
+  | 'daily'
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly'
+  | 'bimonthly'
+  | 'six_months'
+  | 'yearly';
 
 export interface RecurringExpense {
   id: string;

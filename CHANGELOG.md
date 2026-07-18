@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.25.0] - 2026-07-18
+### Added
+- Expanded Recurring Intervals. Added Support for `biweekly` (every 2 weeks), `bimonthly` (every 2 months), `six_months` (every 6 months), and re-added `yearly` options to recurring schedulers in [recurring.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/models/recurring.ts).
+- Integrated scheduler calculations for the new interval loops inside [recurringGenerator.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/recurringGenerator.ts) and wrote unit test coverages in [recurringGenerator.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/recurringGenerator.test.ts).
+- Upgraded the Transaction Add Form inside [AddExpenseForm.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/AddExpenseForm.tsx) to display the new frequency chips wrapped cleanly on small screens.
+
 ## [0.24.0] - 2026-07-18
 ### Added
 - Interactive Demo Data Seeding. Created [demoSeeder.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/demoSeeder.ts) to seed a rich set of past/future transactions, budgets, and recurring schedules, and wrote unit tests in [demoSeeder.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/demoSeeder.test.ts).
