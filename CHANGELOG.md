@@ -3,6 +3,19 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.16.0] - 2026-07-18
+### Added
+- Income & Net Balance tracking. Added `type?: 'expense' | 'income'` support to the [Expense](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/models/expense.ts) data model and validation.
+- Top-level segmented toggles (Expense/Income) in [AddExpenseForm.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/AddExpenseForm.tsx) styled dynamically based on transaction types.
+- A premium, multi-column dashboard summary card (Income, Spent, Net Balance) at the top of the ledger on [HistoryScreen.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/screens/HistoryScreen.tsx).
+- Highlighting for income items in [ExpenseList.tsx](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/components/ExpenseList.tsx) (displaying green positive values `+$X.XX`).
+- Appended `Type` column to CSV headers and cell mapping in [csv.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/utils/csv.ts).
+- 3 new unit tests (70 tests total) across [expense.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/models/expense.test.ts), [monthlySummary.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/monthlySummary.test.ts), and [trendSummary.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/trendSummary.test.ts).
+
+### Changed
+- Filtered out income transactions from category breakdowns in [monthlySummary.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/monthlySummary.ts) and trend calculations in [trendSummary.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/trendSummary.ts).
+- Refactored [expenseExport.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/services/expenseExport.test.ts) and [csv.test.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/tests/utils/csv.test.ts) to verify transaction type columns.
+
 ## [0.15.0] - 2026-07-18
 ### Added
 - Monthly category budget goals. Created [budgetStorage.ts](file:///C:/Users/marve/Desktop/AI-286-Builds/Build_31/src/services/budgetStorage.ts) to read, write, and clear spending limits.

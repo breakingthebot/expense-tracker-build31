@@ -1,5 +1,5 @@
 // src/utils/csv.ts
-// Pure utility for converting an array of Expense objects into a formatted CSV string.
+// Pure utility for converting an array of Expense/Transaction objects into a formatted CSV string.
 // Connects to: src/models/expense.ts, src/services/expenseExport.ts
 // Created: 2026-07-17
 
@@ -23,18 +23,20 @@ export function escapeCsvCell(value: string): string {
 }
 
 /**
- * Converts a list of Expense objects into a standardized CSV string.
- * Format: ID,Date,Category,Amount,Note,CreatedAt
+ * Converts a list of Expense/Transaction objects into a standardized CSV string.
+ * Format: ID,Date,Category,Amount,Type,Note,CreatedAt
  */
 export function convertToCsv(expenses: Expense[]): string {
-  const headers = ['ID', 'Date', 'Category', 'Amount', 'Note', 'CreatedAt'];
+  const headers = ['ID', 'Date', 'Category', 'Amount', 'Type', 'Note', 'CreatedAt'];
   const rows = expenses.map((expense) => {
     const amountFormatted = (expense.amountCents / 100).toFixed(2);
+    const transType = expense.type ?? 'expense';
     return [
       escapeCsvCell(expense.id),
       escapeCsvCell(expense.date),
       escapeCsvCell(expense.category),
       escapeCsvCell(amountFormatted),
+      escapeCsvCell(transType),
       escapeCsvCell(expense.note),
       escapeCsvCell(expense.createdAt),
     ].join(',');

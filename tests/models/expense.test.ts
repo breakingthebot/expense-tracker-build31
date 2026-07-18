@@ -1,5 +1,5 @@
 // tests/models/expense.test.ts
-// Tests for expense validation rules.
+// Tests for expense/transaction validation rules.
 // Mirrors: src/models/expense.ts
 // Created: 2026-07-12
 
@@ -10,11 +10,14 @@ const validInput = {
   category: 'Food' as const,
   note: 'Lunch',
   date: '2026-07-12',
+  type: 'expense' as const,
 };
 
 describe('validateNewExpense', () => {
   it('returns no errors for valid input', () => {
     expect(validateNewExpense(validInput)).toEqual([]);
+    expect(validateNewExpense({ ...validInput, type: 'income' })).toEqual([]);
+    expect(validateNewExpense({ ...validInput, type: undefined })).toEqual([]);
   });
 
   it('rejects a zero amount', () => {
@@ -47,13 +50,19 @@ describe('validateNewExpense', () => {
     expect(errors).toContain('Note must be 200 characters or fewer.');
   });
 
+  it('rejects an invalid transaction type value', () => {
+    const errors = validateNewExpense({ ...validInput, type: 'invalid-type' as any });
+    expect(errors).toContain('Transaction type must be either expense or income.');
+  });
+
   it('collects multiple errors at once', () => {
     const errors = validateNewExpense({
       amountCents: 0,
       category: '',
       note: '',
       date: 'not-a-date',
+      type: 'bad' as any,
     });
-    expect(errors.length).toBe(3);
+    expect(errors.length).toBe(4);
   });
 });

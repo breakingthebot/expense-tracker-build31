@@ -132,6 +132,13 @@ This iteration builds the core vertical slice: add an expense and see it in a li
 - `src/screens/AddScreen.tsx` integrates inline budget setting inputs directly within the categories configurator modal.
 - `src/components/MonthlyChart.tsx` displays gridded progress bars (`$spent of $limit budget`) and warning alert labels (`⚠️ Over budget by $difference` in red) when spending overflows monthly budget goals.
 
+### Income & Balance Tracking (Iteration 16)
+- `src/models/expense.ts` declares transaction types (`'expense' | 'income'`) and validation rules.
+- `src/components/AddExpenseForm.tsx` embeds dynamic Expense/Income segmented toggles that adjust submission payloads.
+- `src/screens/HistoryScreen.tsx` displays a multi-column balance panel (Income, Spent, Net Balance) calculating values from active database subsets.
+- `src/components/ExpenseList.tsx` highlights incoming line items in high-contrast green.
+- `src/utils/csv.ts` appends a `Type` column header and mapped properties to data exports.
+
 ## Continuous integration
 Every push and pull request against `main` runs typecheck and the full Jest
 test suite via GitHub Actions (`.github/workflows/ci.yml`). There's no

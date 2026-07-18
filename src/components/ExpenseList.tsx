@@ -1,7 +1,7 @@
 // src/components/ExpenseList.tsx
-// Displays the saved expenses, most recent first. Tapping a row edits it;
+// Displays the saved transactions, most recent first. Tapping a row edits it;
 // tapping "Delete" removes it. Shows a dedicated empty state when there are
-// no expenses yet.
+// no records yet. Highlights income items with green color and positive prefixes.
 // Connects to: src/models/expense.ts, src/utils/currency.ts, src/utils/date.ts, src/screens/HistoryScreen.tsx
 // Created: 2026-07-12
 
@@ -19,7 +19,7 @@ interface ExpenseListProps {
   isFiltered?: boolean;
 }
 
-/** Renders the list of expenses, or an empty-state message when there are none. */
+/** Renders the list of transactions, or an empty-state message when there are none. */
 export default function ExpenseList({
   expenses,
   onEdit,
@@ -32,7 +32,7 @@ export default function ExpenseList({
     return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyStateText}>
-          {isFiltered ? 'No matching expenses found.' : 'No expenses yet. Add your first one above.'}
+          {isFiltered ? 'No matching transactions found.' : 'No transactions yet. Add your first one.'}
         </Text>
       </View>
     );
@@ -45,12 +45,12 @@ export default function ExpenseList({
       contentContainerStyle={styles.listContent}
       ListHeaderComponent={
         <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>Recent Expenses</Text>
+          <Text style={styles.headerTitle}>Recent Transactions</Text>
           <TouchableOpacity
             onPress={onExport}
             disabled={exporting}
             accessibilityRole="button"
-            accessibilityLabel="Export expenses as CSV"
+            accessibilityLabel="Export transactions as CSV"
           >
             <Text style={[styles.exportButtonText, exporting && styles.exportButtonDisabledText]}>
               {exporting ? 'Exporting...' : 'Export CSV'}
@@ -58,30 +58,36 @@ export default function ExpenseList({
           </TouchableOpacity>
         </View>
       }
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => onEdit(item)}
-          accessibilityRole="button"
-          accessibilityLabel={`Edit expense: ${item.category}, ${formatCents(item.amountCents)}`}
-        >
-          <View style={styles.rowText}>
-            <Text style={styles.category}>{item.category}</Text>
-            {item.note.length > 0 && <Text style={styles.note}>{item.note}</Text>}
-            <Text style={styles.date}>{formatDisplayDate(item.date)}</Text>
-          </View>
-          <View style={styles.rowActions}>
-            <Text style={styles.amount}>{formatCents(item.amountCents)}</Text>
-            <TouchableOpacity
-              onPress={() => onDelete(item.id)}
-              accessibilityRole="button"
-              accessibilityLabel={`Delete expense: ${item.category}, ${formatCents(item.amountCents)}`}
-            >
-              <Text style={styles.deleteText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      )}
+      renderItem={({ item }) => {
+        const isIncome = item.type === 'income';
+
+        return (
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => onEdit(item)}
+            accessibilityRole="button"
+            accessibilityLabel={`Edit transaction: ${item.category}, ${formatCents(item.amountCents)}`}
+          >
+            <View style={styles.rowText}>
+              <Text style={styles.category}>{item.category}</Text>
+              {item.note.length > 0 && <Text style={styles.note}>{item.note}</Text>}
+              <Text style={styles.date}>{formatDisplayDate(item.date)}</Text>
+            </View>
+            <View style={styles.rowActions}>
+              <Text style={[styles.amount, isIncome && styles.amountIncome]}>
+                {isIncome ? '+' : '-'}{formatCents(item.amountCents)}
+              </Text>
+              <TouchableOpacity
+                onPress={() => onDelete(item.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete transaction: ${item.category}, ${formatCents(item.amountCents)}`}
+              >
+                <Text style={styles.deleteText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        );
+      }}
     />
   );
 }
@@ -127,6 +133,7 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 15,
     fontWeight: '600',
+    color: '#222',
   },
   note: {
     fontSize: 13,
@@ -144,6 +151,10 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 15,
     fontWeight: '600',
+    color: '#333',
+  },
+  amountIncome: {
+    color: '#1baf7a',
   },
   deleteText: {
     fontSize: 12,

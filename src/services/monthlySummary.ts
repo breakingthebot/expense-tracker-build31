@@ -37,7 +37,7 @@ export function summarizeMonth(expenses: Expense[], monthKey: string): MonthlySu
   const totalsByCategory = new Map<ExpenseCategory, number>();
 
   for (const expense of expenses) {
-    if (!expense.date.startsWith(monthKey)) {
+    if (!expense.date.startsWith(monthKey) || expense.type === 'income') {
       continue;
     }
     totalsByCategory.set(

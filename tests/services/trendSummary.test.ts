@@ -69,4 +69,15 @@ describe('getTrendSummary', () => {
     // Change: (0 - 50) / 50 * 100 = -100%
     expect(result[2].percentageChange).toBe(-100);
   });
+
+  it('excludes income transactions from rolling trend totals', () => {
+    const expenses: Expense[] = [
+      { id: '1', amountCents: 5000, category: 'Food', note: '', date: '2026-07-10', type: 'expense', createdAt: '' },
+      { id: '2', amountCents: 8000, category: 'Food', note: '', date: '2026-07-15', type: 'income', createdAt: '' }, // Income!
+    ];
+
+    const result = getTrendSummary(expenses, '2026-07');
+    expect(result).toHaveLength(1);
+    expect(result[0].latestAmountCents).toBe(5000);
+  });
 });

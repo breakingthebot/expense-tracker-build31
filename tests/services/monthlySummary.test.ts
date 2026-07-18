@@ -39,6 +39,17 @@ describe('summarizeMonth', () => {
     ]);
   });
 
+  it('excludes income transactions from spending breakdown totals', () => {
+    const expenses = [
+      makeExpense({ category: 'Food', amountCents: 1000, date: '2026-07-01', type: 'expense' }),
+      makeExpense({ category: 'Other', amountCents: 3000, date: '2026-07-05', type: 'income' }), // Income!
+    ];
+
+    const summary = summarizeMonth(expenses, '2026-07');
+    expect(summary.totalCents).toBe(1000);
+    expect(summary.categoryTotals).toEqual([{ category: 'Food', totalCents: 1000 }]);
+  });
+
   it('excludes expenses outside the target month', () => {
     const expenses = [
       makeExpense({ category: 'Food', amountCents: 1000, date: '2026-06-30' }),

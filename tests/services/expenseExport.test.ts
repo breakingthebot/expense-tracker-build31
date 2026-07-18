@@ -51,7 +51,7 @@ describe('exportExpensesToCsv', () => {
 
     expect(FileSystem.writeAsStringAsync).toHaveBeenCalledWith(
       expect.stringContaining('mock-directory/expenses_export_'),
-      expect.stringContaining('ID,Date,Category,Amount,Note,CreatedAt'),
+      expect.stringContaining('ID,Date,Category,Amount,Type,Note,CreatedAt'),
       expect.objectContaining({ encoding: 'utf8' })
     );
 

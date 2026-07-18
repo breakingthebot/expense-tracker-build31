@@ -47,6 +47,9 @@ export function getTrendSummary(expenses: Expense[], latestMonthKey: string): Ca
   const categoryMap = new Map<ExpenseCategory, Record<string, number>>();
 
   expenses.forEach((expense) => {
+    if (expense.type === 'income') {
+      return;
+    }
     const expenseMonth = expense.date.slice(0, 7); // yyyy-mm
     if (targetMonths.includes(expenseMonth)) {
       if (!categoryMap.has(expense.category)) {

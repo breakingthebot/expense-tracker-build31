@@ -1,16 +1,16 @@
 // src/components/AddExpenseForm.tsx
-// Form for entering a new expense, or editing an existing one when
-// `editingExpense` is passed in. Includes a "Repeat this expense" checkbox
-// for quick-add schedules (disabled in edit mode). Validates input locally.
+// Form for entering a new expense or income transaction, or editing an existing one when
+// `editingExpense` is passed in. Includes a top segmented toggle between Expense and Income,
+// and a "Repeat this transaction" checkbox for quick-add schedules. Validates input locally.
 // Connects to: src/config/categories.ts, src/utils/currency.ts, src/utils/date.ts,
-// src/models/recurring.ts, src/screens/AddScreen.tsx
+// src/models/recurring.ts, src/models/expense.ts, src/screens/AddScreen.tsx
 // Created: 2026-07-12
 
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DatePicker from './DatePicker';
 import { ExpenseCategory } from '../config/categories';
-import { Expense } from '../models/expense';
+import { Expense, TransactionType } from '../models/expense';
 import { RecurringInterval } from '../models/recurring';
 import { Category } from '../services/categoryStorage';
 import { centsToInputString, parseDollarsToCents } from '../utils/currency';
@@ -23,19 +23,20 @@ export interface AddFormSubmitData {
   date: string;
   isRecurring: boolean;
   interval?: RecurringInterval;
+  type: TransactionType;
 }
 
 interface AddExpenseFormProps {
   onSubmit: (data: AddFormSubmitData) => Promise<void>;
   submitting: boolean;
   categories: Category[];
-  /** When set, the form edits this expense instead of creating a new one. */
+  /** When set, the form edits this transaction instead of creating a new one. */
   editingExpense?: Expense;
   /** Shown only in edit mode; lets the user back out without saving. */
   onCancelEdit?: () => void;
 }
 
-/** Renders the add/edit-expense form and owns its own field state. */
+/** Renders the add/edit transaction form and manages fields locally. */
 export default function AddExpenseForm({
   onSubmit,
   submitting,
@@ -44,6 +45,10 @@ export default function AddExpenseForm({
   onCancelEdit,
 }: AddExpenseFormProps) {
   const isEditing = editingExpense !== undefined;
+
+  const [type, setType] = useState<TransactionType>(
+    editingExpense?.type ?? 'expense'
+  );
   const [amountText, setAmountText] = useState(
     editingExpense ? centsToInputString(editingExpense.amountCents) : ''
   );
@@ -64,7 +69,7 @@ export default function AddExpenseForm({
     }
 
     if (isRecurring && !note.trim()) {
-      setError('Note is required for recurring bills.');
+      setError('Note is required for recurring transaction schedules.');
       return;
     }
 
@@ -75,6 +80,7 @@ export default function AddExpenseForm({
         category,
         note,
         date,
+        type,
         isRecurring: !isEditing && isRecurring,
         interval: !isEditing && isRecurring ? interval : undefined,
       });
@@ -85,14 +91,56 @@ export default function AddExpenseForm({
         setIsRecurring(false);
       }
     } catch (submitError) {
-      const fallback = isEditing ? 'Could not save changes.' : 'Could not add expense.';
+      const fallback = isEditing ? 'Could not save changes.' : `Could not add ${type}.`;
       setError(submitError instanceof Error ? submitError.message : fallback);
     }
   }
 
+  const headingText = isEditing
+    ? type === 'income'
+      ? 'Edit Income'
+      : 'Edit Expense'
+    : type === 'income'
+      ? 'Add Income'
+      : 'Add Expense';
+
+  const submitText = submitting
+    ? 'Saving...'
+    : isEditing
+      ? 'Save Changes'
+      : isRecurring
+        ? 'Schedule Bill'
+        : type === 'income'
+          ? 'Add Income'
+          : 'Add Expense';
+
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>{isEditing ? 'Edit Expense' : 'Add Expense'}</Text>
+      <Text style={styles.heading}>{headingText}</Text>
+
+      {/* Segmented Control Selector between Expense and Income */}
+      <View style={styles.typeSelectorRow}>
+        <TouchableOpacity
+          style={[styles.typeButton, type === 'expense' && styles.typeButtonExpenseActive]}
+          onPress={() => setType('expense')}
+          accessibilityRole="button"
+          accessibilityLabel="Expense transaction mode"
+        >
+          <Text style={[styles.typeButtonText, type === 'expense' && styles.typeButtonTextActive]}>
+            Expense
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.typeButton, type === 'income' && styles.typeButtonIncomeActive]}
+          onPress={() => setType('income')}
+          accessibilityRole="button"
+          accessibilityLabel="Income transaction mode"
+        >
+          <Text style={[styles.typeButtonText, type === 'income' && styles.typeButtonTextActive]}>
+            Income
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.label}>Amount</Text>
       <TextInput
@@ -101,7 +149,7 @@ export default function AddExpenseForm({
         onChangeText={setAmountText}
         placeholder="0.00"
         keyboardType="decimal-pad"
-        accessibilityLabel="Expense amount"
+        accessibilityLabel="Transaction amount"
       />
 
       <Text style={styles.label}>Category</Text>
@@ -129,8 +177,8 @@ export default function AddExpenseForm({
         style={styles.input}
         value={note}
         onChangeText={setNote}
-        placeholder={isRecurring ? "e.g. Netflix Subscription" : "What was this for?"}
-        accessibilityLabel="Expense note"
+        placeholder={isRecurring ? `e.g. Monthly ${type === 'income' ? 'Salary' : 'Rent'}` : "What was this for?"}
+        accessibilityLabel="Transaction note"
       />
 
       {/* Recurring options (hidden in edit mode) */}
@@ -145,7 +193,7 @@ export default function AddExpenseForm({
             <View style={[styles.checkbox, isRecurring && styles.checkboxChecked]}>
               {isRecurring && <Text style={styles.checkboxTick}>✓</Text>}
             </View>
-            <Text style={styles.checkboxLabel}>Repeat this expense</Text>
+            <Text style={styles.checkboxLabel}>Repeat this {type}</Text>
           </TouchableOpacity>
 
           {isRecurring && (
@@ -180,22 +228,16 @@ export default function AddExpenseForm({
 
       <View style={styles.actionRow}>
         <TouchableOpacity
-          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+          style={[
+            styles.submitButton,
+            submitting && styles.submitButtonDisabled,
+            !submitting && type === 'income' && styles.submitButtonIncome,
+          ]}
           onPress={handleSubmit}
           disabled={submitting}
           accessibilityRole="button"
         >
-          <Text style={styles.submitButtonText}>
-            {submitting
-              ? isEditing
-                ? 'Saving…'
-                : 'Adding…'
-              : isEditing
-              ? 'Save Changes'
-              : isRecurring
-              ? 'Schedule Bill'
-              : 'Add Expense'}
-          </Text>
+          <Text style={styles.submitButtonText}>{submitText}</Text>
         </TouchableOpacity>
 
         {isEditing && (
@@ -221,8 +263,36 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#222',
     marginBottom: 12,
+  },
+  typeSelectorRow: {
+    flexDirection: 'row',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 3,
+    marginBottom: 14,
+  },
+  typeButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  typeButtonExpenseActive: {
+    backgroundColor: '#333',
+  },
+  typeButtonIncomeActive: {
+    backgroundColor: '#1baf7a',
+  },
+  typeButtonText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+  },
+  typeButtonTextActive: {
+    color: '#fff',
   },
   label: {
     fontSize: 13,
@@ -282,6 +352,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
+  },
+  submitButtonIncome: {
+    backgroundColor: '#1baf7a',
   },
   submitButtonDisabled: {
     opacity: 0.6,
